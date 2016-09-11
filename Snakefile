@@ -82,10 +82,10 @@ rule clean_fastq:
                   ILLUMINACLIP:{params.adapter} LEADING:{params.leading} \
                   TRAILING:{params.trailing} SLIDINGWINDOW:{params.window} \
                   MINLEN:{params.minlen} \
-                  && cp %s/{wildcards.sample}_1P.fq.gz {output.r1_p}
-                  && cp %s/{wildcards.sample}_1U.fq.gz {output.r1_u}
-                  && cp %s/{wildcards.sample}_2P.fq.gz {output.r2_p}
-                  && cp %s/{wildcards.sample}_2U.fq.gz {output.r2_u}
+                  && scp %s/{wildcards.sample}_1P.fq.gz {output.r1_p} \
+                  && scp %s/{wildcards.sample}_1U.fq.gz {output.r1_u} \
+                  && scp %s/{wildcards.sample}_2P.fq.gz {output.r2_p} \  
+                  && scp %s/{wildcards.sample}_2U.fq.gz {output.r2_u}
                   """ % (temp_dir, temp_dir, temp_dir, temp_dir, temp_dir))
 
 
