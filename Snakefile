@@ -63,10 +63,10 @@ rule clean_fastq:
         r1 = "data/{sample}/{run}/raw/{sample}_R1.fq.gz",
         r2 = "data/{sample}/{run}/raw/{sample}_R2.fq.gz"
     output:
-        r1_p = os.path.join(DATA_ROOT,"data/{sample}/{run}/trimmed/{sample}_R1_paired.fq.gz"),
-        r1_u = os.path.join(DATA_ROOT,"data/{sample}/{run}/trimmed/{sample}_R1_unpaired.fq.gz"),
-        r2_p = os.path.join(DATA_ROOT,"data/{sample}/{run}/trimmed/{sample}_R2_paired.fq.gz"),
-        r2_u = os.path.join(DATA_ROOT,"data/{sample}/{run}/trimmed/{sample}_R2_unpaired.fq.gz")
+        r1_p = "data/{sample}/{run}/trimmed/{sample}_R1_paired.fq.gz",
+        r1_u = "data/{sample}/{run}/trimmed/{sample}_R1_unpaired.fq.gz",
+        r2_p = "data/{sample}/{run}/trimmed/{sample}_R2_paired.fq.gz",
+        r2_u = "data/{sample}/{run}/trimmed/{sample}_R2_unpaired.fq.gz"
     params:
         adapter = config["ADAPTER"],
         leading = config["LEADING"],
@@ -75,19 +75,14 @@ rule clean_fastq:
         minlen = config["MINLEN"],
         trimmomatic_jar = TRIMMOMATIC_JAR
     run:
-        with tempfile.TemporaryDirectory(dir=TMP_DIR_ROOT) as temp_dir:
-            shell("""
-                  java -jar {params.trimmomatic_jar} PE \
-                  {input.r1} {input.r2} \
-                  -baseout %s/{wildcards.sample}.fq.gz \
-                  ILLUMINACLIP:{params.adapter} LEADING:{params.leading} \
-                  TRAILING:{params.trailing} SLIDINGWINDOW:{params.window} \
-                  MINLEN:{params.minlen} \
-                  && scp %s/{wildcards.sample}_1P.fq.gz {output.r1_p} \
-                  && scp %s/{wildcards.sample}_1U.fq.gz {output.r1_u} \
-                  && scp %s/{wildcards.sample}_2P.fq.gz {output.r2_p} \  
-                  && scp %s/{wildcards.sample}_2U.fq.gz {output.r2_u}
-                  """ % (temp_dir, temp_dir, temp_dir, temp_dir, temp_dir))
+        shell("""
+              java -jar {params.trimmomatic_jar} PE \
+              {input.r1} {input.r2} \
+              {output.r1_p} {output.r1_u} {output.r2_p} {output.r1_u} \
+              ILLUMINACLIP:{params.adapter} LEADING:{params.leading} \
+              TRAILING:{params.trailing} SLIDINGWINDOW:{params.window} \
+              MINLEN:{params.minlen}
+              """)
 
 
 rule trimmed_fastqc:
