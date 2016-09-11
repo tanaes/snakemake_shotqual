@@ -64,10 +64,10 @@ rule clean_fastq:
         r2 = "data/{sample}/{run}/raw/{sample}_R2.fq.gz"
     output:
         r1_p = "data/{sample}/{run}/trimmed/{sample}_R1_paired.fq.gz",
-        r1_u = "data/{sample}/{run}/trimmed/{sample}_R1_unpaired.fq.gz",
-        r2_p = "data/{sample}/{run}/trimmed/{sample}_R2_paired.fq.gz",
-        r2_u = "data/{sample}/{run}/trimmed/{sample}_R2_unpaired.fq.gz"
+        r2_p = "data/{sample}/{run}/trimmed/{sample}_R2_paired.fq.gz"
     params:
+        r1_u = "data/{sample}/{run}/trimmed/{sample}_R1_unpaired.fq.gz",
+        r2_u = "data/{sample}/{run}/trimmed/{sample}_R2_unpaired.fq.gz",
         adapter = config["ADAPTER"],
         leading = config["LEADING"],
         trailing = config["TRAILING"],
@@ -78,7 +78,7 @@ rule clean_fastq:
         shell("""
               java -jar {params.trimmomatic_jar} PE \
               {input.r1} {input.r2} \
-              {output.r1_p} {output.r1_u} {output.r2_p} {output.r1_u} \
+              {output.r1_p} {params.r1_u} {output.r2_p} {params.r1_u} \
               ILLUMINACLIP:{params.adapter} LEADING:{params.leading} \
               TRAILING:{params.trailing} SLIDINGWINDOW:{params.window} \
               MINLEN:{params.minlen}
