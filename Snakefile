@@ -9,7 +9,6 @@ RUNS = config["RUNS"]
 SAMPLES = config["SAMPLES"]
 TRIMMOMATIC_JAR = config["TRIMMOMATIC_JAR"]
 FASTQC_PATH = config["FASTQC_PATH"]
-DATA_ROOT = config["DATA_ROOT"]
 TMP_DIR_ROOT = config["TMP_DIR_ROOT"]
 
 
