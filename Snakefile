@@ -107,8 +107,8 @@ rule multiQC_run:
     input: 
         lambda wildcards: expand("data/{sample}/{run}/trimmed/FastQC/{sample}_R1_paired_fastqc.zip", sample=SAMPLES.keys(), run=wildcards.run),
         lambda wildcards: expand("data/{sample}/{run}/trimmed/FastQC/{sample}_R2_paired_fastqc.zip", sample=SAMPLES.keys(), run=wildcards.run),
-        lambda wildcards: expand("data/{sample}/{run}/raw/FastQC/{sample}_R1_paired_fastqc.zip", sample=SAMPLES.keys(), run=wildcards.run),
-        lambda wildcards: expand("data/{sample}/{run}/raw/FastQC/{sample}_R2_paired_fastqc.zip", sample=SAMPLES.keys(), run=wildcards.run)
+        lambda wildcards: expand("data/{sample}/{run}/raw/FastQC/{sample}_R1_fastqc.zip", sample=SAMPLES.keys(), run=wildcards.run),
+        lambda wildcards: expand("data/{sample}/{run}/raw/FastQC/{sample}_R2_fastqc.zip", sample=SAMPLES.keys(), run=wildcards.run)
     output:
         "data/multiQC/{run}/multiqc_report.html"
     shell:
@@ -119,10 +119,10 @@ rule multiQC_run:
 
 rule multiQC_all:
     input:
-        expand("data/{sample}/{run}/trimmed/{sample}_R1_paired.fq.gz", sample=SAMPLES.keys(), run=RUNS.keys()),
-        expand("data/{sample}/{run}/trimmed/{sample}_R2_paired.fq.gz", sample=SAMPLES.keys(), run=RUNS.keys()),
-        expand("data/{sample}/{run}/raw/{sample}_R1_paired.fq.gz", sample=SAMPLES.keys(), run=RUNS.keys()),
-        expand("data/{sample}/{run}/raw/{sample}_R2_paired.fq.gz", sample=SAMPLES.keys(), run=RUNS.keys())
+        expand("data/{sample}/{run}/trimmed/FastQC/{sample}_R1_paired_fastqc.zip", sample=SAMPLES.keys(), run=RUNS.keys()),
+        expand("data/{sample}/{run}/trimmed/FastQC/{sample}_R2_paired_fastqc.zip", sample=SAMPLES.keys(), run=RUNS.keys()),
+        expand("data/{sample}/{run}/raw/FastQC/{sample}_R1_fastqc.zip", sample=SAMPLES.keys(), run=RUNS.keys()),
+        expand("data/{sample}/{run}/raw/FastQC/{sample}_R2_fastqc.zip", sample=SAMPLES.keys(), run=RUNS.keys())
     output:
         "data/multiQC/all/multiqc_report.html"
     shell:
