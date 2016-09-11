@@ -73,10 +73,11 @@ rule clean_fastq:
         trailing = config["TRAILING"],
         window = config["WINDOW"],
         minlen = config["MINLEN"],
+        threads = 8,
         trimmomatic_jar = TRIMMOMATIC_JAR
     run:
         shell("""
-              java -jar {params.trimmomatic_jar} PE \
+              java -jar {params.trimmomatic_jar} PE -threads {params.threads} \
               {input.r1} {input.r2} \
               {output.r1_p} {params.r1_u} {output.r2_p} {params.r1_u} \
               ILLUMINACLIP:{params.adapter} LEADING:{params.leading} \
