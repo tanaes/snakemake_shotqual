@@ -9,6 +9,7 @@ RUNS = config["RUNS"]
 SAMPLES = config["SAMPLES"]
 TRIMMOMATIC_JAR = config["TRIMMOMATIC_JAR"]
 FASTQC_PATH = config["FASTQC_PATH"]
+DATA_ROOT = config["DATA_ROOT"]
 TMP_DIR_ROOT = config["TMP_DIR_ROOT"]
 
 
@@ -62,10 +63,10 @@ rule clean_fastq:
         r1 = "data/{sample}/{run}/raw/{sample}_R1.fq.gz",
         r2 = "data/{sample}/{run}/raw/{sample}_R2.fq.gz"
     output:
-        r1_p = "data/{sample}/{run}/trimmed/{sample}_R1_paired.fq.gz",
-        r1_u = "data/{sample}/{run}/trimmed/{sample}_R1_unpaired.fq.gz",
-        r2_p = "data/{sample}/{run}/trimmed/{sample}_R2_paired.fq.gz",
-        r2_u = "data/{sample}/{run}/trimmed/{sample}_R2_unpaired.fq.gz"
+        r1_p = os.path.join(DATA_ROOT,"data/{sample}/{run}/trimmed/{sample}_R1_paired.fq.gz"),
+        r1_u = os.path.join(DATA_ROOT,"data/{sample}/{run}/trimmed/{sample}_R1_unpaired.fq.gz"),
+        r2_p = os.path.join(DATA_ROOT,"data/{sample}/{run}/trimmed/{sample}_R2_paired.fq.gz"),
+        r2_u = os.path.join(DATA_ROOT,"data/{sample}/{run}/trimmed/{sample}_R2_unpaired.fq.gz")
     params:
         adapter = config["ADAPTER"],
         leading = config["LEADING"],

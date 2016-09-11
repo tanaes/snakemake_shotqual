@@ -16,6 +16,7 @@ ADAPTER: "TruSeq3-PE.fa:2:30:10"
 
 ### General params
 
+DATA_ROOT: "./"
 TMP_DIR_ROOT: "/localscratch"
 FASTQC_PATH: "~/git_sw/git_bin/fastqc"
 TRIMMOMATIC_JAR: "~/git_sw/git_bin/trimmomatic-0.36.jar"
