@@ -111,10 +111,7 @@ rule multiQC_run:
     output:
         "data/multiQC/{run}/multiqc_report.html"
     shell:
-        """
-        source activate multiqc
-        multiqc -f -o data/multiQC/{wildcards.run} data/*/{wildcards.run}
-        """
+        "source activate multiqc;multiqc -f -o data/multiQC/{wildcards.run} data/*/{wildcards.run}"
 
 rule multiQC_all:
     input:
