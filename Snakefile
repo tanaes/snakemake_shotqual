@@ -113,7 +113,7 @@ rule multiQC_run:
     shell:
         """
         source activate multiqc
-        multiqc data/*/{wildcards.run}/ -o data/multiQC/{wildcards.run}
+        multiqc -f -o data/multiQC/{wildcards.run} data/*/{wildcards.run}
         """
 
 rule multiQC_all:
