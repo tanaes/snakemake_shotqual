@@ -23,11 +23,11 @@ def get_r2(wildcards):
 
 rule all:
     input:
-        expand("data/{sample}/{run}/raw/{sample}_R1.fq.gz", sample=SAMPLES.keys(), run=RUNS.keys()),
-        expand("data/{sample}/{run}/raw/{sample}_R2.fq.gz", sample=SAMPLES.keys(), run=RUNS.keys()),
+        #expand("data/{sample}/{run}/raw/{sample}_R1.fq.gz", sample=SAMPLES.keys(), run=RUNS.keys()),
+        #expand("data/{sample}/{run}/raw/{sample}_R2.fq.gz", sample=SAMPLES.keys(), run=RUNS.keys()),
         expand("data/{sample}/{run}/raw/FastQC/{sample}_R2_fastqc.html",  sample=SAMPLES.keys(), run=RUNS.keys()),
-        expand("data/{sample}/{run}/trimmed/FastQC/{sample}_R1_paired_fastqc.html",  sample=SAMPLES.keys(), run=RUNS.keys()),
-        expand("data/multiQC/{run}/multiqc_report.html", run=RUNS.keys())
+        #expand("data/{sample}/{run}/trimmed/FastQC/{sample}_R1_paired_fastqc.html",  sample=SAMPLES.keys(), run=RUNS.keys()),
+        #expand("data/multiQC/{run}/multiqc_report.html", run=RUNS.keys())
 
 rule link_files:
     input: 
@@ -48,11 +48,13 @@ rule raw_fastqc:
         "data/{sample}/{run}/raw/FastQC/{sample}_R2_fastqc.zip",
         "data/{sample}/{run}/raw/FastQC/{sample}_R1_fastqc.html",
         "data/{sample}/{run}/raw/FastQC/{sample}_R2_fastqc.html"
+    params:
+        fastqc_path = FASTQC_PATH
     run:
         shell("""
               mkdir data/{wildcards.sample}/{wildcards.run}/raw/FastQC/
-              %s --outdir data/{wildcards.sample}/{wildcards.run}/raw/FastQC/ {input.r1} {input.r2}
-              """ % FASTQC_PATH)
+              {params.fastqc_path} --outdir data/{wildcards.sample}/{wildcards.run}/raw/FastQC/ {input.r1} {input.r2}
+              """)
 
 
 ## use trimmomatic to trim low quality bases and adaptors
@@ -70,23 +72,23 @@ rule clean_fastq:
         leading = config["LEADING"],
         trailing = config["TRAILING"],
         window = config["WINDOW"],
-        minlen = config["MINLEN"]
+        minlen = config["MINLEN"],
+        trimmomatic_jar = TRIMMOMATIC_JAR
     run:
         with tempfile.TemporaryDirectory(dir=TMP_DIR_ROOT) as temp_dir:
             shell("""
-                  java -jar %s PE \
+                  java -jar params.trimmomatic_jar PE \
                   {input.r1} {input.r2} \
-                  -baseout %s/{wildcards.sample}.fq.gz \
+                  -baseout {wildcards.temp_dir}/{wildcards.sample}.fq.gz \
                   ILLUMINACLIP:{params.adapter} LEADING:{params.leading} \
                   TRAILING:{params.trailing} SLIDINGWINDOW:{params.window} \
                   MINLEN:{params.minlen} \
                   && mkdir data/{wildcards.sample}/{wildcards.run}/trimmed \
-                  && cp %s/{wildcards.sample}_1P.fq.gz {output.r1_p}
-                  cp %s/{wildcards.sample}_1U.fq.gz {output.r1_u}
-                  cp %s/{wildcards.sample}_2P.fq.gz {output.r2_p}
-                  cp %s/{wildcards.sample}_2U.fq.gz {output.r2_u}
-                  """ % (TRIMMOMATIC_JAR, temp_dir, 
-                       temp_dir, temp_dir, temp_dir, temp_dir))
+                  && cp {wildcards.temp_dir}/{wildcards.sample}_1P.fq.gz {output.r1_p}
+                  cp {wildcards.temp_dir}/{wildcards.sample}_1U.fq.gz {output.r1_u}
+                  cp {wildcards.temp_dir}/{wildcards.sample}_2P.fq.gz {output.r2_p}
+                  cp {wildcards.temp_dir}/{wildcards.sample}_2U.fq.gz {output.r2_u}
+                  """)
 
 
 rule trimmed_fastqc:
@@ -98,11 +100,13 @@ rule trimmed_fastqc:
         "data/{sample}/{run}/trimmed/FastQC/{sample}_R2_paired_fastqc.zip",
         "data/{sample}/{run}/trimmed/FastQC/{sample}_R1_paired_fastqc.html",
         "data/{sample}/{run}/trimmed/FastQC/{sample}_R2_paired_fastqc.html"
+    params:
+        fastqc_path = FASTQC_PATH
     run:
         shell("""
               mkdir data/{wildcards.sample}/{wildcards.run}/trimmed/FastQC/
-              %s --outdir data/{wildcards.sample}/{wildcards.run}/trimmed/FastQC/ {input.r1} {input.r2}
-              """ % FASTQC_PATH)
+              {params.fastqc_path} --outdir data/{wildcards.sample}/{wildcards.run}/trimmed/FastQC/ {input.r1} {input.r2}
+              """)
 
 rule multiQC_run:
     input: 
@@ -114,7 +118,7 @@ rule multiQC_run:
         "data/multiQC/{run}/multiqc_report.html"
     shell:
         """
-        source activate multiqc \
+        source activate multiqc
         multiqc data/*/{wildcards.run}/ -o data/multiQC/{wildcards.run}
         """
 
