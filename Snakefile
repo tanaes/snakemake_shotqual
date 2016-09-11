@@ -120,7 +120,7 @@ rule multiQC_run:
 rule multiQC_all:
     input:
         expand("data/{sample}/{run}/trimmed/{sample}_R1_paired.fq.gz", sample=SAMPLES.keys(), run=RUNS.keys()),
-        expand("data/{sample}/{run}/trimmed/{sample}_R2_paired.fq.gz", sample=SAMPLES.keys(), run=RUNS.keys()).
+        expand("data/{sample}/{run}/trimmed/{sample}_R2_paired.fq.gz", sample=SAMPLES.keys(), run=RUNS.keys()),
         expand("data/{sample}/{run}/raw/{sample}_R1_paired.fq.gz", sample=SAMPLES.keys(), run=RUNS.keys()),
         expand("data/{sample}/{run}/raw/{sample}_R2_paired.fq.gz", sample=SAMPLES.keys(), run=RUNS.keys())
     output:
