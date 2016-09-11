@@ -48,11 +48,12 @@ rule raw_fastqc:
         "data/{sample}/{run}/raw/FastQC/{sample}_R2_fastqc.zip",
         "data/{sample}/{run}/raw/FastQC/{sample}_R1_fastqc.html",
         "data/{sample}/{run}/raw/FastQC/{sample}_R2_fastqc.html"
-    shell:
-        """
-        mkdir data/{wildcards.sample}/{wildcards.run}/raw/FastQC/ \
-        fastqc --outdir data/{wildcards.sample}/{wildcards.run}/raw/FastQC/ {input.r1} {input.r2}
-        """
+    run:
+        shell("""
+              mkdir data/{wildcards.sample}/{wildcards.run}/raw/FastQC/
+              %s --outdir data/{wildcards.sample}/{wildcards.run}/raw/FastQC/ {input.r1} {input.r2}
+              """ % FASTQC_PATH)
+
 
 ## use trimmomatic to trim low quality bases and adaptors
 rule clean_fastq:
@@ -75,14 +76,14 @@ rule clean_fastq:
             shell("""
                   java -jar %s PE \
                   {input.r1} {input.r2} \
-                  %s/{wildcards.sample}.fq.gz \
+                  -baseout %s/{wildcards.sample}.fq.gz \
                   ILLUMINACLIP:{params.adapter} LEADING:{params.leading} \
                   TRAILING:{params.trailing} SLIDINGWINDOW:{params.window} \
                   MINLEN:{params.minlen} \
                   && mkdir data/{wildcards.sample}/{wildcards.run}/trimmed \
-                  && cp %s/{wildcards.sample}_1P.fq.gz {output.r1_p} \
-                  cp %s/{wildcards.sample}_1U.fq.gz {output.r1_u} \
-                  cp %s/{wildcards.sample}_2P.fq.gz {output.r2_p} \
+                  && cp %s/{wildcards.sample}_1P.fq.gz {output.r1_p}
+                  cp %s/{wildcards.sample}_1U.fq.gz {output.r1_u}
+                  cp %s/{wildcards.sample}_2P.fq.gz {output.r2_p}
                   cp %s/{wildcards.sample}_2U.fq.gz {output.r2_u}
                   """ % (TRIMMOMATIC_JAR, temp_dir, 
                        temp_dir, temp_dir, temp_dir, temp_dir))
@@ -97,11 +98,11 @@ rule trimmed_fastqc:
         "data/{sample}/{run}/trimmed/FastQC/{sample}_R2_paired_fastqc.zip",
         "data/{sample}/{run}/trimmed/FastQC/{sample}_R1_paired_fastqc.html",
         "data/{sample}/{run}/trimmed/FastQC/{sample}_R2_paired_fastqc.html"
-    shell:
-        """
-        mkdir data/{wildcards.sample}/{wildcards.run}/trimmed/FastQC/ \
-        fastqc --outdir data/{wildcards.sample}/{wildcards.run}/trimmed/FastQC/ {input.r1} {input.r2}
-        """
+    run:
+        shell("""
+              mkdir data/{wildcards.sample}/{wildcards.run}/trimmed/FastQC/
+              %s --outdir data/{wildcards.sample}/{wildcards.run}/trimmed/FastQC/ {input.r1} {input.r2}
+              """ % FASTQC_PATH)
 
 rule multiQC_run:
     input: 
