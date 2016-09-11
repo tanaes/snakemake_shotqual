@@ -2,7 +2,7 @@ import tempfile
 import os
 import glob
 
-configfile: "config.yaml.template"
+#configfile: "config.yaml.template"
 
 
 RUNS = config["RUNS"]
