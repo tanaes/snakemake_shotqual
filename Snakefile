@@ -52,7 +52,6 @@ rule raw_fastqc:
         fastqc_path = FASTQC_PATH
     run:
         shell("""
-              #mkdir data/{wildcards.sample}/{wildcards.run}/raw/FastQC/
               {params.fastqc_path} --outdir data/{wildcards.sample}/{wildcards.run}/raw/FastQC/ {input.r1} {input.r2}
               """)
 
@@ -77,7 +76,7 @@ rule clean_fastq:
     run:
         with tempfile.TemporaryDirectory(dir=TMP_DIR_ROOT) as temp_dir:
             shell("""
-                  java -jar params.trimmomatic_jar PE \
+                  java -jar {params.trimmomatic_jar} PE \
                   {input.r1} {input.r2} \
                   -baseout %s/{wildcards.sample}.fq.gz \
                   ILLUMINACLIP:{params.adapter} LEADING:{params.leading} \
@@ -104,7 +103,6 @@ rule trimmed_fastqc:
         fastqc_path = FASTQC_PATH
     run:
         shell("""
-              mkdir data/{wildcards.sample}/{wildcards.run}/trimmed/FastQC/
               {params.fastqc_path} --outdir data/{wildcards.sample}/{wildcards.run}/trimmed/FastQC/ {input.r1} {input.r2}
               """)
 
