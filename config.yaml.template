@@ -1,0 +1,21 @@
+SAMPLES:
+  "Sample.1": "sample1"
+  "Sample.2": "sample2"
+
+RUNS:
+  "Run1": "/Users/jonsanders/Development/git_sw/snakemake_shotqual/example/reads/Run1"
+  "Run2": "/Users/jonsanders/Development/git_sw/snakemake_shotqual/example/reads/Run2"
+
+### Trimmomatic params
+
+LEADING: "3"
+TRAILING: "3"
+WINDOW: "4:15"
+MINLEN: "36"
+ADAPTER: "TruSeq3-PE.fa:2:30:10"
+
+### General params
+
+TMP_DIR_ROOT: "/localscratch"
+FASTQC_PATH: "~/git_sw/git_bin/fastqc"
+TRIMMOMATIC_JAR: "~/git_sw/git_bin/trimmomatic-0.36.jar"
