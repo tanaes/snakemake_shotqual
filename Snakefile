@@ -110,8 +110,10 @@ rule multiQC_run:
         lambda wildcards: expand("data/{sample}/{run}/raw/FastQC/{sample}_R2_fastqc.zip", sample=SAMPLES.keys(), run=wildcards.run)
     output:
         "data/multiQC/{run}/multiqc_report.html"
+    params:
+        error = "data/errors.txt"
     shell:
-        "source activate multiqc;multiqc -f -o data/multiQC/{wildcards.run} data/*/{wildcards.run}"
+        "source activate multiqc;multiqc -f -o data/multiQC/{wildcards.run} data/*/{wildcards.run} 2> errors.txt"
 
 rule multiQC_all:
     input:
