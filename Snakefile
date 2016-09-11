@@ -28,7 +28,7 @@ rule all:
         #expand("data/{sample}/{run}/raw/{sample}_R2.fq.gz", sample=SAMPLES.keys(), run=RUNS.keys()),
         expand("data/{sample}/{run}/raw/FastQC/{sample}_R2_fastqc.html",  sample=SAMPLES.keys(), run=RUNS.keys()),
         expand("data/{sample}/{run}/trimmed/FastQC/{sample}_R1_paired_fastqc.html",  sample=SAMPLES.keys(), run=RUNS.keys()),
-        expand("data/multiQC/{run}/multiqc_report.html", run=RUNS.keys())
+        #expand("data/multiQC/{run}/multiqc_report.html", run=RUNS.keys())
 
 rule link_files:
     input: 
