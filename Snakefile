@@ -26,7 +26,7 @@ rule all:
         #expand("data/{sample}/{run}/raw/{sample}_R1.fq.gz", sample=SAMPLES.keys(), run=RUNS.keys()),
         #expand("data/{sample}/{run}/raw/{sample}_R2.fq.gz", sample=SAMPLES.keys(), run=RUNS.keys()),
         expand("data/{sample}/{run}/raw/FastQC/{sample}_R2_fastqc.html",  sample=SAMPLES.keys(), run=RUNS.keys()),
-        #expand("data/{sample}/{run}/trimmed/FastQC/{sample}_R1_paired_fastqc.html",  sample=SAMPLES.keys(), run=RUNS.keys()),
+        expand("data/{sample}/{run}/trimmed/FastQC/{sample}_R1_paired_fastqc.html",  sample=SAMPLES.keys(), run=RUNS.keys()),
         #expand("data/multiQC/{run}/multiqc_report.html", run=RUNS.keys())
 
 rule link_files:
@@ -52,7 +52,7 @@ rule raw_fastqc:
         fastqc_path = FASTQC_PATH
     run:
         shell("""
-              mkdir data/{wildcards.sample}/{wildcards.run}/raw/FastQC/
+              #mkdir data/{wildcards.sample}/{wildcards.run}/raw/FastQC/
               {params.fastqc_path} --outdir data/{wildcards.sample}/{wildcards.run}/raw/FastQC/ {input.r1} {input.r2}
               """)
 
@@ -79,16 +79,16 @@ rule clean_fastq:
             shell("""
                   java -jar params.trimmomatic_jar PE \
                   {input.r1} {input.r2} \
-                  -baseout {wildcards.temp_dir}/{wildcards.sample}.fq.gz \
+                  -baseout %s/{wildcards.sample}.fq.gz \
                   ILLUMINACLIP:{params.adapter} LEADING:{params.leading} \
                   TRAILING:{params.trailing} SLIDINGWINDOW:{params.window} \
                   MINLEN:{params.minlen} \
                   && mkdir data/{wildcards.sample}/{wildcards.run}/trimmed \
-                  && cp {wildcards.temp_dir}/{wildcards.sample}_1P.fq.gz {output.r1_p}
-                  cp {wildcards.temp_dir}/{wildcards.sample}_1U.fq.gz {output.r1_u}
-                  cp {wildcards.temp_dir}/{wildcards.sample}_2P.fq.gz {output.r2_p}
-                  cp {wildcards.temp_dir}/{wildcards.sample}_2U.fq.gz {output.r2_u}
-                  """)
+                  && cp %s/{wildcards.sample}_1P.fq.gz {output.r1_p}
+                  cp %s/{wildcards.sample}_1U.fq.gz {output.r1_u}
+                  cp %s/{wildcards.sample}_2P.fq.gz {output.r2_p}
+                  cp %s/{wildcards.sample}_2U.fq.gz {output.r2_u}
+                  """ % (temp_dir, temp_dir, temp_dir, temp_dir, temp_dir))
 
 
 rule trimmed_fastqc:
