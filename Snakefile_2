@@ -306,6 +306,7 @@ rule qc_trimmomatic_se:
     output:
         single = "data/{sample}/{run}/trimmed/{sample}_SE.trimmed.fq.gz"
     params:
+        single = "{sample}_SE.trimmed.fq.gz"
         adaptor     = lambda wildcards: config["samples_se"][wildcards.sample]["adaptor"],
         phred       = lambda wildcards: config["samples_se"][wildcards.sample]["phred"],
         trimmomatic_params = config["trimmomatic_params"]
@@ -315,17 +316,20 @@ rule qc_trimmomatic_se:
         "logs/{run}/qc/trimmomatic_se_{sample}.log" 
     threads:
         6
-    shell:
-        """
-        {trimmomatic} SE \
-            -threads {threads} \
-            -{params.phred} \
-            {input.single} \
-            {output.single} \
-            ILLUMINACLIP:{params.adaptor}:2:30:10 \
-            {params.trimmomatic_params} \
-        2> {log}
-        """
+    run:
+        with tempfile.TemporaryDirectory(dir=TMP_DIR_ROOT) as temp_dir:
+            shell("""
+                  {trimmomatic} SE \
+                      -threads {threads} \
+                      -{params.phred} \
+                      {input.single} \
+                      %s/{params.single} \
+                      ILLUMINACLIP:{params.adaptor}:2:30:10 \
+                      {params.trimmomatic_params} \
+                  2> {log}
+
+                  scp %s/{params.single} {output.single} 
+                  """ % (temp_dir, temp_dir))
     
 
 
