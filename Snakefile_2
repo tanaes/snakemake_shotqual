@@ -54,13 +54,13 @@ rule all:
             end = "SE".split()
         ),
         expand(
-            "data/{sample}/{run}/fastqc_trimmed/{sample}_{end}_fastqc.{extension}",
+            "data/{sample}/{run}/fastqc_trimmed/{sample}_{end}.trimmed_fastqc.{extension}",
             sample = SAMPLES_PE,
             end = "R1 R2".split(),
             run = RUN,
             extension = "zip html".split()
         ) + expand(
-            "data/{sample}/{run}/fastqc_trimmed/{sample}_{end}_fastqc.{extension}",
+            "data/{sample}/{run}/fastqc_trimmed/{sample}_{end}.trimmed_fastqc.{extension}",
             sample = SAMPLES_SE,
             end = "SE".split(),
             run = RUN,
