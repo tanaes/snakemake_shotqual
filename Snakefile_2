@@ -125,8 +125,8 @@ rule raw_fastqc_sample:
     input:
         fastq = "data/{sample}/{run}/raw/{sample}_{end}.fq.gz"
     output:
-        html = "data/{sample}/{run}/fastqc_raw/{sample}_{end}.fastqc.html",
-        zip =  "data/{sample}/{run}/fastqc_raw/{sample}_{end}.fastqc.zip"
+        html = "data/{sample}/{run}/fastqc_raw/{sample}_{end}_fastqc.html",
+        zip =  "data/{sample}/{run}/fastqc_raw/{sample}_{end}_fastqc.zip"
     threads:
         1
     params:
@@ -148,13 +148,13 @@ rule raw_fastqc_sample:
 rule raw_fastqc:
     input:
         expand(
-            "data/{sample}/{run}/fastqc_raw/{sample}_{end}.fastqc.{extension}",
+            "data/{sample}/{run}/fastqc_raw/{sample}_{end}_fastqc.{extension}",
             sample = SAMPLES_PE,
             end = "R1 R2".split(),
             run = RUN,
             extension = "zip html".split()
         ) + expand(
-            "data/{sample}/{run}/fastqc_raw/{sample}_{end}.fastqc.{extension}",
+            "data/{sample}/{run}/fastqc_raw/{sample}_{end}_fastqc.{extension}",
             sample = SAMPLES_SE,
             end = "SE".split(),
             run = RUN,
@@ -193,6 +193,109 @@ rule raw_fastqc:
 #               TRAILING:{params.trailing} SLIDINGWINDOW:{params.window} \
 #               MINLEN:{params.minlen}
 #               """)
+
+
+
+# rule qc_trimmomatic_pe:
+#     """
+#     Run trimmomatic on paired end mode to eliminate Illumina adaptors and 
+#     remove low quality regions and reads.
+#     Inputs _1 and _2 are piped through gzip/pigz.
+#     Outputs _1 and _2 are piped to gzip/pigz (level 9).
+#     Outputs _3 and _4 are compressed with the builtin compressor from 
+#     Trimmomatic. Further on they are catted and compressed with gzip/pigz 
+#     (level 9).
+#     Note: The cut -f 1 -d " " is to remove additional fields in the FASTQ
+#     header. It is done posterior to the trimming since the output comes 
+#     slower than the input is read.
+#     Number of threads used:
+#         4 for trimmomatic
+#         2 for gzip inputs
+#         2 for gzip outputs
+#         Total: 8
+#     """
+#     input:
+#         forward = RAW_DIR + "/{sample}_1.fq.gz",
+#         reverse = RAW_DIR + "/{sample}_2.fq.gz"
+#     output:
+#         forward     = temp(TRIM_DIR + "/{sample}_1.fq.gz"),
+#         reverse     = temp(TRIM_DIR + "/{sample}_2.fq.gz"),
+#         unpaired    = protected(TRIM_DIR + "/{sample}.final.pe_se.fq.gz")
+#     params:
+#         unpaired_1  = TRIM_DIR + "/{sample}_3.fq.gz",
+#         unpaired_2  = TRIM_DIR + "/{sample}_4.fq.gz",
+#         adaptor     = lambda wildcards: config["samples_pe"][wildcards.sample]["adaptor"],
+#         phred       = lambda wildcards: config["samples_pe"][wildcards.sample]["phred"],
+#         trimmomatic_params = config["trimmomatic_params"]
+#     benchmark:
+#         "benchmarks/qc/trimmomatic_pe_{sample}.json"
+#     log:
+#         "logs/qc/trimmomatic_pe_{sample}.log" 
+#     threads:
+#         8
+#     shell:
+#         """
+#         {trimmomatic} PE \
+#             -threads {threads} \
+#             -{params.phred} \
+#             <({gzip} -dc {input.forward} ) \
+#             <({gzip} -dc {input.reverse} ) \
+#             >(cut -f 1 -d " " | {gzip} -9 > {output.forward} ) \
+#             {params.unpaired_1} \
+#             >(cut -f 1 -d " " | {gzip} -9 > {output.reverse} ) \
+#             {params.unpaired_2} \
+#             ILLUMINACLIP:{params.adaptor}:2:30:10 \
+#             {params.trimmomatic_params} \
+#         2> {log}
+            
+#         zcat {params.unpaired_1} {params.unpaired_2} |
+#         cut -f 1 -d " " |
+#         {gzip} -9 > {output.unpaired}
+        
+#         rm {params.unpaired_1} {params.unpaired_2}
+#         """
+
+
+
+# rule qc_trimmomatic_se:
+#     """
+#     Run trimmomatic on single end mode to eliminate Illumina adaptors and 
+#         remove low quality regions and reads.
+#     Input is piped through gzip/pigz.
+#     Output is piped to gzip.
+#     Threads used:
+#         4 for trimmomatic
+#         1 for gzip input
+#         1 for gzip output
+#     """
+#     input:
+#         single = RAW_DIR + "/{sample}.fq.gz",
+#     output:
+#         single     = protected(TRIM_DIR + "/{sample}.final.se.fq.gz")
+#     params:
+#         adaptor     = lambda wildcards: config["samples_se"][wildcards.sample]["adaptor"],
+#         phred       = lambda wildcards: config["samples_se"][wildcards.sample]["phred"],
+#         trimmomatic_params = config["trimmomatic_params"]
+#     benchmark:
+#         "benchmarks/qc/trimmomatic_se_{sample}.json"
+#     log:
+#         "logs/qc/trimmomatic_se_{sample}.log" 
+#     threads:
+#         6
+#     shell:
+#         """
+#         {trimmomatic} SE \
+#             -threads {threads} \
+#             -{params.phred} \
+#             <({gzip} -dc {input.single}) \
+#             >(cut -f 1 -d " " | {gzip} -9 > {output.single}) \
+#             ILLUMINACLIP:{params.adaptor}:2:30:10 \
+#             {params.trimmomatic_params} \
+#         2> {log}
+#         """
+    
+
+
 
 
 # rule trimmed_fastqc:
@@ -376,105 +479,6 @@ rule raw_fastqc:
 # ####
 # # Quality control rules
 # ####
-
-# rule qc_trimmomatic_pe:
-#     """
-#     Run trimmomatic on paired end mode to eliminate Illumina adaptors and 
-#     remove low quality regions and reads.
-#     Inputs _1 and _2 are piped through gzip/pigz.
-#     Outputs _1 and _2 are piped to gzip/pigz (level 9).
-#     Outputs _3 and _4 are compressed with the builtin compressor from 
-#     Trimmomatic. Further on they are catted and compressed with gzip/pigz 
-#     (level 9).
-#     Note: The cut -f 1 -d " " is to remove additional fields in the FASTQ
-#     header. It is done posterior to the trimming since the output comes 
-#     slower than the input is read.
-#     Number of threads used:
-#         4 for trimmomatic
-#         2 for gzip inputs
-#         2 for gzip outputs
-#         Total: 8
-#     """
-#     input:
-#         forward = RAW_DIR + "/{sample}_1.fq.gz",
-#         reverse = RAW_DIR + "/{sample}_2.fq.gz"
-#     output:
-#         forward     = temp(TRIM_DIR + "/{sample}_1.fq.gz"),
-#         reverse     = temp(TRIM_DIR + "/{sample}_2.fq.gz"),
-#         unpaired    = protected(TRIM_DIR + "/{sample}.final.pe_se.fq.gz")
-#     params:
-#         unpaired_1  = TRIM_DIR + "/{sample}_3.fq.gz",
-#         unpaired_2  = TRIM_DIR + "/{sample}_4.fq.gz",
-#         adaptor     = lambda wildcards: config["samples_pe"][wildcards.sample]["adaptor"],
-#         phred       = lambda wildcards: config["samples_pe"][wildcards.sample]["phred"],
-#         trimmomatic_params = config["trimmomatic_params"]
-#     benchmark:
-#         "benchmarks/qc/trimmomatic_pe_{sample}.json"
-#     log:
-#         "logs/qc/trimmomatic_pe_{sample}.log" 
-#     threads:
-#         8
-#     shell:
-#         """
-#         {trimmomatic} PE \
-#             -threads {threads} \
-#             -{params.phred} \
-#             <({gzip} -dc {input.forward} ) \
-#             <({gzip} -dc {input.reverse} ) \
-#             >(cut -f 1 -d " " | {gzip} -9 > {output.forward} ) \
-#             {params.unpaired_1} \
-#             >(cut -f 1 -d " " | {gzip} -9 > {output.reverse} ) \
-#             {params.unpaired_2} \
-#             ILLUMINACLIP:{params.adaptor}:2:30:10 \
-#             {params.trimmomatic_params} \
-#         2> {log}
-            
-#         zcat {params.unpaired_1} {params.unpaired_2} |
-#         cut -f 1 -d " " |
-#         {gzip} -9 > {output.unpaired}
-        
-#         rm {params.unpaired_1} {params.unpaired_2}
-#         """
-
-
-
-# rule qc_trimmomatic_se:
-#     """
-#     Run trimmomatic on single end mode to eliminate Illumina adaptors and 
-#         remove low quality regions and reads.
-#     Input is piped through gzip/pigz.
-#     Output is piped to gzip.
-#     Threads used:
-#         4 for trimmomatic
-#         1 for gzip input
-#         1 for gzip output
-#     """
-#     input:
-#         single = RAW_DIR + "/{sample}.fq.gz",
-#     output:
-#         single     = protected(TRIM_DIR + "/{sample}.final.se.fq.gz")
-#     params:
-#         adaptor     = lambda wildcards: config["samples_se"][wildcards.sample]["adaptor"],
-#         phred       = lambda wildcards: config["samples_se"][wildcards.sample]["phred"],
-#         trimmomatic_params = config["trimmomatic_params"]
-#     benchmark:
-#         "benchmarks/qc/trimmomatic_se_{sample}.json"
-#     log:
-#         "logs/qc/trimmomatic_se_{sample}.log" 
-#     threads:
-#         6
-#     shell:
-#         """
-#         {trimmomatic} SE \
-#             -threads {threads} \
-#             -{params.phred} \
-#             <({gzip} -dc {input.single}) \
-#             >(cut -f 1 -d " " | {gzip} -9 > {output.single}) \
-#             ILLUMINACLIP:{params.adaptor}:2:30:10 \
-#             {params.trimmomatic_params} \
-#         2> {log}
-#         """
-    
 
 
 # rule qc_interleave_pe_pe:
