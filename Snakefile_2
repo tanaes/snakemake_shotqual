@@ -7,7 +7,7 @@ import glob
 #shell.prefix("set -euo pipefail;")
 configfile: "config2.yaml"
 
-
+TMP_DIR_ROOT = config["TMP_DIR_ROOT"]
 RUN = config["RUN"]
 SAMPLES_PE = config["samples_pe"] if config["samples_pe"] is not None else []
 SAMPLES_SE = config["samples_se"] if config["samples_se"] is not None else []
@@ -247,8 +247,11 @@ rule qc_trimmomatic_pe:
         reverse  = "data/{sample}/{run}/trimmed/{sample}_R2.trimmed.fq.gz",
         unpaired = "data/{sample}/{run}/trimmed/{sample}_up.trimmed.fq.gz"
     params:
-        unpaired_1  = "data/{sample}/{run}/trimmed/{sample}_up_R1.trimmed.fq.gz",
-        unpaired_2  = "data/{sample}/{run}/trimmed/{sample}_up_R2.trimmed.fq.gz",
+        forward  = "{sample}_R1.trimmed.fq.gz",
+        reverse  = "{sample}_R2.trimmed.fq.gz",
+        unpaired_1  = "{sample}_up_R1.trimmed.fq.gz",
+        unpaired_2  = "{sample}_up_R2.trimmed.fq.gz",
+        unpaired = "{sample}_up.trimmed.fq.gz"
         adaptor     = lambda wildcards: config["samples_pe"][wildcards.sample]["adaptor"],
         phred       = lambda wildcards: config["samples_pe"][wildcards.sample]["phred"],
         trimmomatic_params = config["trimmomatic_params"]
@@ -258,27 +261,31 @@ rule qc_trimmomatic_pe:
         "logs/{run}/qc/trimmomatic_pe_{sample}.log" 
     threads:
         8
-    shell:
-        """
-        {trimmomatic} PE \
-            -threads {threads} \
-            -{params.phred} \
-            {input.forward} \
-            {input.reverse} \
-            {output.forward} \
-            {params.unpaired_1} \
-            {output.reverse} \
-            {params.unpaired_2} \
-            ILLUMINACLIP:{params.adaptor}:2:30:10 \
-            {params.trimmomatic_params} \
-        2> {log}
-            
-        zcat {params.unpaired_1} {params.unpaired_2} |
-        cut -f 1 -d " " |
-        {gzip} -9 > {output.unpaired}
-        
-        rm {params.unpaired_1} {params.unpaired_2}
-        """
+    run:
+        with tempfile.TemporaryDirectory(dir=TMP_DIR_ROOT) as temp_dir:
+            shell("""
+                  {trimmomatic} PE \
+                    -threads {threads} \
+                    -{params.phred} \
+                    {input.forward} \
+                    {input.reverse} \
+                    {0}/{params.forward} \
+                    {0}/{params.unpaired_1} \
+                    {0}/{params.reverse} \
+                    {0}/{params.unpaired_2} \
+                    ILLUMINACLIP:{params.adaptor}:2:30:10 \
+                    {params.trimmomatic_params} \
+                  2> {log}
+                  
+                  zcat {0}/{params.unpaired_1} {0}/{params.unpaired_2} |
+                  cut -f 1 -d " " |
+                  {gzip} -9 > {0}/{params.unpaired}
+                  
+                  scp {0}/{params.forward} {output.forward}
+                  scp {0}/{params.reverse} {output.reverse}
+                  scp {0}/{params.unpaired_2} {output.unpaired}
+                  rm -r {0}
+                  """.format(temp_dir))
 
 
 
