@@ -52,7 +52,21 @@ rule all:
             sample = SAMPLES_SE,
             run = RUN,
             end = "SE".split()
+        ),
+        expand(
+            "data/{sample}/{run}/fastqc_trimmed/{sample}_{end}_fastqc.{extension}",
+            sample = SAMPLES_PE,
+            end = "R1 R2".split(),
+            run = RUN,
+            extension = "zip html".split()
+        ) + expand(
+            "data/{sample}/{run}/fastqc_trimmed/{sample}_{end}_fastqc.{extension}",
+            sample = SAMPLES_SE,
+            end = "SE".split(),
+            run = RUN,
+            extension = "zip html".split()
         )
+
 
 # rule all:
 #     input:
@@ -239,9 +253,9 @@ rule qc_trimmomatic_pe:
         phred       = lambda wildcards: config["samples_pe"][wildcards.sample]["phred"],
         trimmomatic_params = config["trimmomatic_params"]
     benchmark:
-        "benchmarks/qc/{run}/trimmomatic_pe_{sample}.json"
+        "benchmarks/{run}/qc/trimmomatic_pe_{sample}.json"
     log:
-        "logs/qc/{run}/trimmomatic_pe_{sample}.log" 
+        "logs/{run}/qc/trimmomatic_pe_{sample}.log" 
     threads:
         8
     shell:
@@ -288,9 +302,9 @@ rule qc_trimmomatic_se:
         phred       = lambda wildcards: config["samples_se"][wildcards.sample]["phred"],
         trimmomatic_params = config["trimmomatic_params"]
     benchmark:
-        "benchmarks/qc/{run}/trimmomatic_se_{sample}.json"
+        "benchmarks/{run}/qc/trimmomatic_se_{sample}.json"
     log:
-        "logs/qc/{run}/trimmomatic_se_{sample}.log" 
+        "logs/{run}/qc/trimmomatic_se_{sample}.log" 
     threads:
         6
     shell:
@@ -307,6 +321,31 @@ rule qc_trimmomatic_se:
     
 
 
+
+
+rule qc_fastqc:
+    """
+    Do FASTQC reports
+    One thread per fastq.gz file
+    """
+    input:
+        fastq = "data/{sample}/{run}/trimmed/{sample}_{end}.trimmed.fq.gz"
+    output:
+        html = "data/{sample}/{run}/fastqc_trimmed/{sample}_{end}_fastqc.html",
+        zip =  "data/{sample}/{run}/fastqc_trimmed/{sample}_{end}_fastqc.zip"
+    threads:
+        1
+    log:
+        "logs/{run}/qc/fastqc_trimmed_{sample}_{pair}.log"
+    benchmark:
+        "benchmarks/{run}/qc/fastqc_trimmed_{sample}_{pair}.json"
+    shell:
+        """
+        fastqc \
+            --outdir data/{wildcards.sample}/{wildcards.run}/fastqc_trimmed \
+            {input.fastq} 
+        > {log} 2>&1
+        """
 
 
 # rule trimmed_fastqc:
