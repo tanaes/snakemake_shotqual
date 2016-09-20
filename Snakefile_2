@@ -331,8 +331,8 @@ rule qc_fastqc:
     input:
         fastq = "data/{sample}/{run}/trimmed/{sample}_{end}.trimmed.fq.gz"
     output:
-        html = "data/{sample}/{run}/fastqc_trimmed/{sample}_{end}_fastqc.html",
-        zip =  "data/{sample}/{run}/fastqc_trimmed/{sample}_{end}_fastqc.zip"
+        html = "data/{sample}/{run}/fastqc_trimmed/{sample}_{end}.trimmed_fastqc.html",
+        zip =  "data/{sample}/{run}/fastqc_trimmed/{sample}_{end}.trimmed_fastqc.zip"
     threads:
         1
     log:
@@ -344,7 +344,7 @@ rule qc_fastqc:
         fastqc \
             --outdir data/{wildcards.sample}/{wildcards.run}/fastqc_trimmed \
             {input.fastq} 
-        > {log} 2>&1
+        2> {log} 1>&2
         """
 
 
