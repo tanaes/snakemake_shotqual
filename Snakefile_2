@@ -251,7 +251,7 @@ rule qc_trimmomatic_pe:
         reverse  = "{sample}_R2.trimmed.fq.gz",
         unpaired_1  = "{sample}_up_R1.trimmed.fq.gz",
         unpaired_2  = "{sample}_up_R2.trimmed.fq.gz",
-        unpaired = "{sample}_up.trimmed.fq.gz"
+        unpaired = "{sample}_up.trimmed.fq.gz",
         adaptor     = lambda wildcards: config["samples_pe"][wildcards.sample]["adaptor"],
         phred       = lambda wildcards: config["samples_pe"][wildcards.sample]["phred"],
         trimmomatic_params = config["trimmomatic_params"]
