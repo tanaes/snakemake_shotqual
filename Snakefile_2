@@ -336,9 +336,9 @@ rule qc_fastqc:
     threads:
         1
     log:
-        "logs/{run}/qc/fastqc_trimmed_{sample}_{pair}.log"
+        "logs/{run}/qc/fastqc_trimmed_{sample}_{end}.log"
     benchmark:
-        "benchmarks/{run}/qc/fastqc_trimmed_{sample}_{pair}.json"
+        "benchmarks/{run}/qc/fastqc_trimmed_{sample}_{end}.json"
     shell:
         """
         fastqc \
