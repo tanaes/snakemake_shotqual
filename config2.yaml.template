@@ -1,3 +1,5 @@
+TMP_DIR_ROOT:
+    "/localscratch"
 RUN:
     test2 # This should be your research study animal, plant, cell line, ...
 
