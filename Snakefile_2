@@ -269,23 +269,25 @@ rule qc_trimmomatic_pe:
                     -{params.phred} \
                     {input.forward} \
                     {input.reverse} \
-                    {0}/{params.forward} \
-                    {0}/{params.unpaired_1} \
-                    {0}/{params.reverse} \
-                    {0}/{params.unpaired_2} \
+                    %s/{params.forward} \
+                    %s/{params.unpaired_1} \
+                    %s/{params.reverse} \
+                    %s/{params.unpaired_2} \
                     ILLUMINACLIP:{params.adaptor}:2:30:10 \
                     {params.trimmomatic_params} \
                   2> {log}
                   
-                  zcat {0}/{params.unpaired_1} {0}/{params.unpaired_2} |
+                  zcat %s/{params.unpaired_1} %s/{params.unpaired_2} |
                   cut -f 1 -d " " |
-                  {gzip} -9 > {0}/{params.unpaired}
+                  {gzip} -9 > %s/{params.unpaired}
                   
-                  scp {0}/{params.forward} {output.forward}
-                  scp {0}/{params.reverse} {output.reverse}
-                  scp {0}/{params.unpaired_2} {output.unpaired}
-                  rm -r {0}
-                  """.format(temp_dir))
+                  scp %s/{params.forward} {output.forward}
+                  scp %s/{params.reverse} {output.reverse}
+                  scp %s/{params.unpaired_2} {output.unpaired}
+                  rm -r %s
+                  """ % (temp_dir, temp_dir, temp_dir, temp_dir, temp_dir,
+                         temp_dir, temp_dir, temp_dir, temp_dir, temp_dir,
+                         temp_dir))
 
 
 
