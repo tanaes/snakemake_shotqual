@@ -284,10 +284,9 @@ rule qc_trimmomatic_pe:
                   scp %s/{params.forward} {output.forward}
                   scp %s/{params.reverse} {output.reverse}
                   scp %s/{params.unpaired_2} {output.unpaired}
-                  rm -r %s
                   """ % (temp_dir, temp_dir, temp_dir, temp_dir, temp_dir,
-                         temp_dir, temp_dir, temp_dir, temp_dir, temp_dir,
-                         temp_dir))
+                         temp_dir, temp_dir, temp_dir, temp_dir, temp_dir
+                         ))
 
 
 
