@@ -2,9 +2,7 @@ import tempfile
 import os
 import glob
 
-#configfile: "config.yaml.template"
 
-#shell.prefix("set -euo pipefail;")
 configfile: "config2.yaml"
 
 TMP_DIR_ROOT = config["TMP_DIR_ROOT"]
@@ -17,7 +15,10 @@ trimmomatic = config["software"]["trimmomatic"]
 gzip        = config["software"]["gzip"]
 
 
-#localrules: all, gather_assemblies
+localrules: raw_make_links_pe, raw_make_links_se, multiQC_run, multiQC_all
+
+
+#### Top-level rules: rules to execute a subset of the pipeline
 
 rule all:
     """
@@ -68,24 +69,27 @@ rule all:
         )
 
 
-# rule all:
-#     input:
-#         #expand("data/{sample}/{run}/raw/{sample}_R1.fq.gz", sample=SAMPLES.keys(), run=RUNS.keys()),
-#         #expand("data/{sample}/{run}/raw/{sample}_R2.fq.gz", sample=SAMPLES.keys(), run=RUNS.keys()),
-#         expand("data/{sample}/{run}/raw/FastQC/{sample}_R2_fastqc.html",  sample=SAMPLES.keys(), run=RUNS.keys()),
-#         expand("data/{sample}/{run}/trimmed/FastQC/{sample}_R1_paired_fastqc.html",  sample=SAMPLES.keys(), run=RUNS.keys()),
-#         #expand("data/multiQC/{run}/multiqc_report.html", run=RUNS.keys())
 
+rule raw_fastqc:
+    """
+    Rule to do just QC on raw reads:
+        - raw_fastqc
+    """
+    input:
+        expand(
+            "data/{sample}/{run}/fastqc_raw/{sample}_{end}_fastqc.{extension}",
+            sample = SAMPLES_PE,
+            end = "R1 R2".split(),
+            run = RUN,
+            extension = "zip html".split()
+        ) + expand(
+            "data/{sample}/{run}/fastqc_raw/{sample}_{end}_fastqc.{extension}",
+            sample = SAMPLES_SE,
+            end = "SE".split(),
+            run = RUN,
+            extension = "zip html".split()
+        )
 
-# rule link_files:
-#     input: 
-#         r1 = get_r1,
-#         r2 = get_r2
-#     output: 
-#         r1 = "data/{sample}/{run}/raw/{sample}_R1.fq.gz",
-#         r2 = "data/{sample}/{run}/raw/{sample}_R2.fq.gz"
-#     shell:
-#         "ln -s {input.r1} {output.r1}; ln -s {input.r2} {output.r2}"
 
 
 rule raw_make_links_pe:
@@ -123,27 +127,6 @@ rule raw_make_links_se:
         """
         ln -s $(readlink -f {input.single}) {output.single} 2>  {log}
         """ 
-
-
-
-
-
-# rule raw_fastqc:
-#     input:
-#         r1 = "data/{sample}/{run}/raw/{sample}_R1.fq.gz",
-#         r2 = "data/{sample}/{run}/raw/{sample}_R2.fq.gz"
-#     output:
-#         "data/{sample}/{run}/raw/FastQC/{sample}_R1_fastqc.zip",
-#         "data/{sample}/{run}/raw/FastQC/{sample}_R2_fastqc.zip",
-#         "data/{sample}/{run}/raw/FastQC/{sample}_R1_fastqc.html",
-#         "data/{sample}/{run}/raw/FastQC/{sample}_R2_fastqc.html"
-#     params:
-#         fastqc_path = FASTQC_PATH
-#     run:
-#         shell("""
-#               {params.fastqc_path} --outdir data/{wildcards.sample}/{wildcards.run}/raw/FastQC/ {input.r1} {input.r2}
-#               """)
-
 
 
 rule raw_fastqc_sample:
@@ -185,40 +168,6 @@ rule raw_fastqc:
             run = RUN,
             extension = "zip html".split()
         )
-
-
-
-
-
-
-# ## use trimmomatic to trim low quality bases and adaptors
-# rule clean_fastq:
-#     input:
-#         r1 = "data/{sample}/{run}/raw/{sample}_R1.fq.gz",
-#         r2 = "data/{sample}/{run}/raw/{sample}_R2.fq.gz"
-#     output:
-#         r1_p = "data/{sample}/{run}/trimmed/{sample}_R1_paired.fq.gz",
-#         r2_p = "data/{sample}/{run}/trimmed/{sample}_R2_paired.fq.gz"
-#     params:
-#         r1_u = "data/{sample}/{run}/trimmed/{sample}_R1_unpaired.fq.gz",
-#         r2_u = "data/{sample}/{run}/trimmed/{sample}_R2_unpaired.fq.gz",
-#         adapter = config["ADAPTER"],
-#         leading = config["LEADING"],
-#         trailing = config["TRAILING"],
-#         window = config["WINDOW"],
-#         minlen = config["MINLEN"],
-#         threads = 8,
-#         trimmomatic_jar = TRIMMOMATIC_JAR
-#     run:
-#         shell("""
-#               java -jar {params.trimmomatic_jar} PE -threads {params.threads} \
-#               {input.r1} {input.r2} \
-#               {output.r1_p} {params.r1_u} {output.r2_p} {params.r1_u} \
-#               ILLUMINACLIP:{params.adapter} LEADING:{params.leading} \
-#               TRAILING:{params.trailing} SLIDINGWINDOW:{params.window} \
-#               MINLEN:{params.minlen}
-#               """)
-
 
 
 rule qc_trimmomatic_pe:
@@ -330,9 +279,6 @@ rule qc_trimmomatic_se:
 
                   scp %s/{params.single} {output.single} 
                   """ % (temp_dir, temp_dir))
-    
-
-
 
 
 rule qc_fastqc:
@@ -358,293 +304,3 @@ rule qc_fastqc:
             {input.fastq} 
         2> {log} 1>&2
         """
-
-
-# rule trimmed_fastqc:
-#     input:
-#         r1 = "data/{sample}/{run}/trimmed/{sample}_R1_paired.fq.gz",
-#         r2 = "data/{sample}/{run}/trimmed/{sample}_R2_paired.fq.gz"
-#     output:
-#         "data/{sample}/{run}/trimmed/FastQC/{sample}_R1_paired_fastqc.zip",
-#         "data/{sample}/{run}/trimmed/FastQC/{sample}_R2_paired_fastqc.zip",
-#         "data/{sample}/{run}/trimmed/FastQC/{sample}_R1_paired_fastqc.html",
-#         "data/{sample}/{run}/trimmed/FastQC/{sample}_R2_paired_fastqc.html"
-#     params:
-#         fastqc_path = FASTQC_PATH
-#     run:
-#         shell("""
-#               {params.fastqc_path} --outdir data/{wildcards.sample}/{wildcards.run}/trimmed/FastQC/ {input.r1} {input.r2}
-#               """)
-
-# rule multiQC_run:
-#     input: 
-#         lambda wildcards: expand("data/{sample}/{run}/trimmed/FastQC/{sample}_R1_paired_fastqc.zip", sample=SAMPLES.keys(), run=wildcards.run),
-#         lambda wildcards: expand("data/{sample}/{run}/trimmed/FastQC/{sample}_R2_paired_fastqc.zip", sample=SAMPLES.keys(), run=wildcards.run),
-#         lambda wildcards: expand("data/{sample}/{run}/raw/FastQC/{sample}_R1_fastqc.zip", sample=SAMPLES.keys(), run=wildcards.run),
-#         lambda wildcards: expand("data/{sample}/{run}/raw/FastQC/{sample}_R2_fastqc.zip", sample=SAMPLES.keys(), run=wildcards.run)
-#     output:
-#         "data/multiQC/{run}/multiqc_report.html"
-#     params:
-#         error = "data/errors.txt"
-#     shell:
-#         "source activate multiqc;multiqc -f -o data/multiQC/{wildcards.run} data/*/{wildcards.run} 2> errors.txt"
-
-# rule multiQC_all:
-#     input:
-#         expand("data/{sample}/{run}/trimmed/FastQC/{sample}_R1_paired_fastqc.zip", sample=SAMPLES.keys(), run=RUNS.keys()),
-#         expand("data/{sample}/{run}/trimmed/FastQC/{sample}_R2_paired_fastqc.zip", sample=SAMPLES.keys(), run=RUNS.keys()),
-#         expand("data/{sample}/{run}/raw/FastQC/{sample}_R1_fastqc.zip", sample=SAMPLES.keys(), run=RUNS.keys()),
-#         expand("data/{sample}/{run}/raw/FastQC/{sample}_R2_fastqc.zip", sample=SAMPLES.keys(), run=RUNS.keys())
-#     output:
-#         "data/multiQC/all/multiqc_report.html"
-#     shell:
-#         """
-#         source activate multiqc \
-#         multiqc data -o data/multiQC/all
-#         """
-
-
-# # rule all:
-#     input:
-#         PART_DIR + "/Trinity.fasta",
-#         expand( # fastqc zip and html for raw PE data
-#             FASTQC_RAW_DIR + "/{sample}_{end}.fastqc.{extension}",
-#             sample = SAMPLES_PE,
-#             end = "1 2".split(),
-#             extension = "zip html".split()
-#         ) + expand( # fastqc zip and html for raw SE data
-#             FASTQC_RAW_DIR + "/{sample}.fastqc.{extension}",
-#             sample = SAMPLES_SE,
-#             extension = "zip html".split()
-#         ),
-#         expand( # fastqc zip and html files for PE data QC
-#             FASTQC_TRIM_DIR + "/{sample}.final.{pair}_fastqc.{extension}",
-#             sample = SAMPLES_PE,
-#             pair   = PAIRS,
-#             extension = "zip html".split()
-#         ),
-#         expand( # fastqc zip and html files for SE data QC
-#             FASTQC_TRIM_DIR + "/{sample}.final.{pair}_fastqc.{extension}",
-#             sample = SAMPLES_SE,
-#             pair = ["se"],
-#             extension = "zip html".split()
-#         )
-
-
-
-# rule clean:
-#     params:
-#         links = expand(
-#                 RAW_DIR + "/{sample}_{end}.fq.gz",
-#                 sample = SAMPLES_PE,
-#                 end = "1 2".split()
-#             ) + expand (
-#                 RAW_DIR + "/{sample}.fq.gz",
-#                 sample = SAMPLES_SE
-#             )
-#     shell:
-#         """
-#         rm -rf {params.links}
-#         rm -rf data/fastqc_raw
-#         rm -rf data/fastq_trimmed
-#         rm -rf data/fastqc_trimmed
-#         rm -rf data/fastq_norm
-#         rm -rf data/fastqc_norm
-#         rm -rf data/assembly
-#         rm -rf data/partitions
-#         rm -rf logs
-#         rm -rf benchmarks
-#         """
-
-
-
-# rule raw_make_links_pe:
-#     input:
-#         forward= lambda wildcards: config["samples_pe"][wildcards.sample]["forward"],
-#         reverse= lambda wildcards: config["samples_pe"][wildcards.sample]["reverse"]
-#     output:
-#         forward= RAW_DIR + "/{sample}_1.fq.gz",
-#         reverse= RAW_DIR + "/{sample}_2.fq.gz"
-#     threads:
-#         1
-#     log:
-#         "logs/raw/make_links_pe_{sample}.log"
-#     benchmark:
-#         "benchmarks/raw/make_links_pe_{sample}.json"
-#     shell:
-#         """
-#         ln -s $(readlink -f {input.forward}) {output.forward} 2> {log}
-#         ln -s $(readlink -f {input.reverse}) {output.reverse} 2>> {log}
-#         """ 
-
-
-
-# rule raw_make_links_se:
-#     input:
-#         single= lambda wildcards: config["samples_se"][wildcards.sample]["single"],
-#     output:
-#         single= RAW_DIR + "/{sample}.fq.gz"
-#     threads:
-#         1
-#     log:
-#         "logs/raw/make_links_se_{sample}.log"
-#     benchmark:
-#         "benchmarks/raw/make_links_se_{sample}.json"
-#     shell:
-#         """
-#         ln -s $(readlink -f {input.single}) {output.single} 2>  {log}
-#         """ 
-
-
-
-# rule raw_fastqc_sample:
-#     input:
-#         fastq = RAW_DIR + "/{sample}.fq.gz"
-#     output:
-#         html= FASTQC_RAW_DIR + "/{sample}.fastqc.html",
-#         zip=  FASTQC_RAW_DIR + "/{sample}.fastqc.zip"
-#     threads:
-#         1
-#     params:
-#         html= RAW_DIR + "/{sample}_fastqc.html",
-#         zip=  RAW_DIR + "/{sample}_fastqc.zip"
-#     log:
-#         "logs/raw/fastqc_{sample}.log"
-#     benchmark:
-#         "benchmarks/raw/fastqc_{sample}.json"
-#     shell:
-#         """
-#         fastqc \
-#             --nogroup \
-#             {input.fastq} \
-#         2> {log} 1>&2
-        
-#         mv {params.html} {output.html}
-#         mv {params.zip}  {output.zip}
-#         """
-
-
-
-# rule raw_fastqc:
-#     input:
-#         expand(
-#             FASTQC_RAW_DIR + "/{sample}_{end}.fastqc.{extension}",
-#             sample = SAMPLES_PE,
-#             end = "1 2".split(),
-#             extension = "zip html".split()
-#         ) + expand(
-#             FASTQC_RAW_DIR + "/{sample}.fastqc.{extension}",
-#             sample = SAMPLES_SE,
-#             extension = "zip html".split()
-#         )
-
-# ####
-# # Quality control rules
-# ####
-
-
-# rule qc_interleave_pe_pe:
-#     """
-#     From the adaptor free _1 and _2 , interleave the reads.
-#     Read the inputs, interleave, filter the stream and compress.
-#     """
-#     input:
-#         forward= TRIM_DIR + "/{sample}_1.fq.gz",
-#         reverse= TRIM_DIR + "/{sample}_2.fq.gz"
-#     output:
-#         interleaved= protected(TRIM_DIR + "/{sample}.final.pe_pe.fq.gz")
-#     threads:
-#         2 # One for the pairer and other for gzip
-#     log:
-#         "logs/qc/interleave_pe_{sample}.log"
-#     benchmark:
-#         "benchmarks/qc/interleave_pe_{sample}.json"
-#     shell:
-#         """
-#         ( python bin/interleave-reads.py \
-#             {input.forward} \
-#             {input.reverse} |
-#         {gzip} -9 > {output.interleaved} ) \
-#         2> {log}
-#         """
-
-
-
-# rule qc_fastqc:
-#     """
-#     Do FASTQC reports
-#     Uses --nogroup!
-#     One thread per fastq.gz file
-#     """
-#     input:
-#         fastq = TRIM_DIR + "/{sample}.final.{pair}.fq.gz"
-#     output:
-#         zip   = protected(FASTQC_TRIM_DIR + "/{sample}.final.{pair}_fastqc.zip"),
-#         html  = protected(FASTQC_TRIM_DIR + "/{sample}.final.{pair}_fastqc.html")
-#     threads:
-#         1
-#     params:
-#         zip   = TRIM_DIR + "/{sample}.final.{pair}_fastqc.zip",
-#         html  = TRIM_DIR + "/{sample}.final.{pair}_fastqc.html"
-#     log:
-#         "logs/qc/fastqc_trimmed_{sample}_{pair}.log"
-#     benchmark:
-#         "benchmarks/qc/fastqc_trimmed_{sample}_{pair}.json"
-#     shell:
-#         """
-#         fastqc \
-#             --nogroup \
-#             {input.fastq} \
-#         > {log} 2>&1
-        
-#         mv {params.zip} {output.zip}
-#         mv {params.html} {output.html}
-#         """
-
-
-
-# rule qc:
-#     """
-#     Rule to do all the Quality Control:
-#         - raw_fastqc
-#         - qc_trimmomatic_pe
-#         - qc_trimmomatic_se
-#         - qc_interleave_pe_pe
-#         - qc_fastqc
-#     """
-#     input:
-#         expand( # fastqc zip and html for raw PE data
-#             FASTQC_RAW_DIR + "/{sample}_{end}.fastqc.{extension}",
-#             sample = SAMPLES_PE,
-#             end = "1 2".split(),
-#             extension = "zip html".split()
-#         ) + expand( # fastqc zip and html for raw SE data
-#             FASTQC_RAW_DIR + "/{sample}.fastqc.{extension}",
-#             sample = SAMPLES_SE,
-#             extension = "zip html".split()
-#         ),
-#         expand( # fq.gz files for PE data
-#             TRIM_DIR + "/{sample}.final.{pair}.fq.gz",
-#             sample = SAMPLES_PE,
-#             pair   = PAIRS
-#         ),
-#         expand( # fq.gz files for SE data
-#             TRIM_DIR + "/{sample}.final.{pair}.fq.gz",
-#             sample = SAMPLES_SE,
-#             pair = ["se"]
-#         ),
-#         expand( # fastqc zip and html files for PE data
-#             FASTQC_TRIM_DIR + "/{sample}.final.{pair}_fastqc.{extension}",
-#             sample = SAMPLES_PE,
-#             pair   = PAIRS,
-#             extension = "zip html".split()
-#         ),
-#         expand( # fastqc zip and html files for SE data
-#             FASTQC_TRIM_DIR + "/{sample}.final.{pair}_fastqc.{extension}",
-#             sample = SAMPLES_SE,
-#             pair = ["se"],
-#             extension = "zip html".split()
-#         )
-
-
-
