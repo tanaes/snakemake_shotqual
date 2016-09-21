@@ -294,10 +294,10 @@ rule qc_fastqc:
 
 rule multiQC_run:
     input: 
-        expand("data/{sample}/{run}/fastqc_trimmed/{sample}_{end}.trimmed_fastqc.html", sample=SAMPLES_PE + SAMPLES_SE, run=RUN),
-        expand("data/{sample}/{run}/fastqc_trimmed/{sample}_{end}.trimmed_fastqc.zip", sample=SAMPLES_PE + SAMPLES_SE, run=RUN),
-        expand("data/{sample}/{run}/fastqc_raw/{sample}_{end}_fastqc.html", sample=SAMPLES_PE + SAMPLES_SE, run=RUN),
-        expand("data/{sample}/{run}/fastqc_raw/{sample}_{end}_fastqc.zip", sample=SAMPLES_PE + SAMPLES_SE, run=RUN)
+        expand("data/{sample}/{run}/fastqc_trimmed/{sample}_{end}.trimmed_fastqc.html", sample=SAMPLES_PE.keys() + SAMPLES_SE.keys(), run=RUN),
+        expand("data/{sample}/{run}/fastqc_trimmed/{sample}_{end}.trimmed_fastqc.zip", sample=SAMPLES_PE.keys() + SAMPLES_SE.keys(), run=RUN),
+        expand("data/{sample}/{run}/fastqc_raw/{sample}_{end}_fastqc.html", sample=SAMPLES_PE.keys() + SAMPLES_SE.keys(), run=RUN),
+        expand("data/{sample}/{run}/fastqc_raw/{sample}_{end}_fastqc.zip", sample=SAMPLES_PE.keys() + SAMPLES_SE.keys(), run=RUN)
     output:
         "data/multiQC/{run}/multiqc_report.html"
     threads:
@@ -315,10 +315,10 @@ rule multiQC_run:
 
 rule multiQC_all:
     input:
-        expand("data/{sample}/{run}/fastqc_trimmed/{sample}_{end}.trimmed_fastqc.html", sample=SAMPLES_PE + SAMPLES_SE, run=RUN),
-        expand("data/{sample}/{run}/fastqc_trimmed/{sample}_{end}.trimmed_fastqc.zip", sample=SAMPLES_PE + SAMPLES_SE, run=RUN),
-        expand("data/{sample}/{run}/fastqc_raw/{sample}_{end}_fastqc.html", sample=SAMPLES_PE + SAMPLES_SE, run=RUN),
-        expand("data/{sample}/{run}/fastqc_raw/{sample}_{end}_fastqc.zip", sample=SAMPLES_PE + SAMPLES_SE, run=RUN)
+        expand("data/{sample}/{run}/fastqc_trimmed/{sample}_{end}.trimmed_fastqc.html", sample=SAMPLES_PE.keys() + SAMPLES_SE.keys(), run=RUN),
+        expand("data/{sample}/{run}/fastqc_trimmed/{sample}_{end}.trimmed_fastqc.zip", sample=SAMPLES_PE.keys() + SAMPLES_SE.keys(), run=RUN),
+        expand("data/{sample}/{run}/fastqc_raw/{sample}_{end}_fastqc.html", sample=SAMPLES_PE.keys() + SAMPLES_SE.keys(), run=RUN),
+        expand("data/{sample}/{run}/fastqc_raw/{sample}_{end}_fastqc.zip", sample=SAMPLES_PE.keys() + SAMPLES_SE.keys(), run=RUN)
     output:
         "data/multiQC/all/multiqc_report.html"
     threads:
