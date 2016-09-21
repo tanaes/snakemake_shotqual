@@ -95,7 +95,6 @@ rule raw_fastqc:
         )
 
 
-
 rule raw_make_links_pe:
     input:
         forward = lambda wildcards: config["samples_pe"][wildcards.sample]["forward"],
@@ -155,23 +154,6 @@ rule raw_fastqc_sample:
             {input.fastq} \
         2> {log} 1>&2
         """
-
-
-rule raw_fastqc:
-    input:
-        expand(
-            "data/{sample}/{run}/fastqc_raw/{sample}_{end}_fastqc.{extension}",
-            sample = SAMPLES_PE,
-            end = "R1 R2".split(),
-            run = RUN,
-            extension = "zip html".split()
-        ) + expand(
-            "data/{sample}/{run}/fastqc_raw/{sample}_{end}_fastqc.{extension}",
-            sample = SAMPLES_SE,
-            end = "SE".split(),
-            run = RUN,
-            extension = "zip html".split()
-        )
 
 
 rule qc_trimmomatic_pe:
