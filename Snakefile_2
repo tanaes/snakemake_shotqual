@@ -306,7 +306,7 @@ rule qc_trimmomatic_se:
     output:
         single = "data/{sample}/{run}/trimmed/{sample}_SE.trimmed.fq.gz"
     params:
-        single = "{sample}_SE.trimmed.fq.gz"
+        single = "{sample}_SE.trimmed.fq.gz",
         adaptor     = lambda wildcards: config["samples_se"][wildcards.sample]["adaptor"],
         phred       = lambda wildcards: config["samples_se"][wildcards.sample]["phred"],
         trimmomatic_params = config["trimmomatic_params"]
