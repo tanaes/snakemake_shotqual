@@ -3,7 +3,7 @@ import os
 import glob
 
 
-configfile: "config2.yaml"
+configfile: "config.yaml"
 
 TMP_DIR_ROOT = config["TMP_DIR_ROOT"]
 RUN = config["RUN"]

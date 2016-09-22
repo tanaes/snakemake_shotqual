@@ -1,23 +1,23 @@
 TMP_DIR_ROOT:
     "/localscratch"
 RUN:
-    test2 # This should be your research study animal, plant, cell line, ...
+    test1
 
 samples_pe:
-    Song51_24059:
-        forward: /sequencing/ucsd/complete_runs/160805_K00180_0231_AHCTHWBBXX/Song51_24059_S241_L005_R1_001.fastq.gz
-        reverse: /sequencing/ucsd/complete_runs/160805_K00180_0231_AHCTHWBBXX/Song51_24059_S241_L005_R2_001.fastq.gz
+    sample1:
+        forward: example/reads/Run1/sample1_S312_R1_L001.fastq.gz
+        reverse: example/reads/Run1/sample1_S312_R2_L001.fastq.gz
         adaptor: /home/jgsanders/git_sw/git_bin/Trimmomatic-0.36/adapters/TruSeq3-PE-2.fa
         phred:   phred33
-    Song53_24613:
-        forward: /sequencing/ucsd/complete_runs/160805_K00180_0231_AHCTHWBBXX/Song53_24613_S279_L005_R1_001.fastq.gz
-        reverse: /sequencing/ucsd/complete_runs/160805_K00180_0231_AHCTHWBBXX/Song53_24613_S279_L005_R2_001.fastq.gz
+    sample2:
+        forward: example/reads/Run1/sample2_S521_R1_L001.fastq.gz
+        reverse: example/reads/Run1/sample2_S521_R2_L001.fastq.gz
         adaptor: /home/jgsanders/git_sw/git_bin/Trimmomatic-0.36/adapters/TruSeq3-PE-2.fa
         phred:   phred33
 
 samples_se:
-    Song52_25153:
-        single:   /sequencing/ucsd/complete_runs/160805_K00180_0231_AHCTHWBBXX/Song52_25153_S274_L005_R1_001.fastq.gz
+    sample1:
+        single:   example/reads/Run1/sample1_S312_R1_L001.fastq.gz
         adaptor:  /home/jgsanders/git_sw/git_bin/Trimmomatic-0.36/adapters/TruSeq3-PE-2.fa
         phred:    phred33
 
