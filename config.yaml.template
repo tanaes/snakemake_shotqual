@@ -1,5 +1,5 @@
 TMP_DIR_ROOT:
-    "/localscratch"
+    "./"
 RUN:
     test1
 
@@ -27,5 +27,5 @@ software:
     gzip:           pigz
 
 trimmomatic_params:
-    LEADING:20 TRAILING:20 AVGQUAL:30 MINLEN:32 TOPHRED33
+    LEADING:20 TRAILING:20 AVGQUAL:30 MINLEN:3 TOPHRED33
 
