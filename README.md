@@ -40,3 +40,12 @@ files, or do not yield all possible output files in Trimmomatic (for example,
 if there are no R1 reads that survive trimming). For this reason, I have been
 invoking this workflow with the `--keep-going` flag, which will run subsequent
 steps even if not all outputs are successfully generated.
+
+Currently, the test data are completely artificial very short sequences. So that
+these run, the template config.yaml file has a very permissive length filter for
+Trimmomatic (MINLEN:3). For real data, a better default is MINLEN:32.
+
+Finally, note that disk access-intensive steps are set to run on a temporary
+directory to allow execution on local scratch space in a cluster environment.
+This variable is called `TMP_DIR_ROOT` in the config.yaml, and should be set to
+the local scratch directory to enable this behavior. 
