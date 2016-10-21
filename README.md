@@ -24,7 +24,7 @@ included a Jupyter Notebook to create this file from the sample manifest Excel
 spreadsheet provided to IGM.
 
 If executed directly using `snakemake --snakefile Snakefile --configfile config.yaml`,
-the entire workflow will be run locally. Alternatively, the worklfow can be
+the entire workflow will be run locally. Alternatively, the workflow can be
 executed in a Torque cluster environment with `bash launch.sh [dir] 
 --snakefile Snakefile --configfile config.yaml`. This will parse cluster.json
 for job submission parameters and run each rule instance as a separate cluster
@@ -43,7 +43,7 @@ steps even if not all outputs are successfully generated.
 
 Currently, the test data are completely artificial very short sequences. So that
 these run, the template config.yaml file has a very permissive length filter for
-Trimmomatic (MINLEN:3). For real data, a better default is MINLEN:32.
+Trimmomatic (`MINLEN:3`). For real data, a better default is `MINLEN:32`.
 
 Finally, note that disk access-intensive steps are set to run on a temporary
 directory to allow execution on local scratch space in a cluster environment.
