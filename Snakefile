@@ -3,12 +3,12 @@ import os
 import glob
 
 
-configfile: "config.yaml"
+# configfile: "config.yaml"
 
 TMP_DIR_ROOT = config["TMP_DIR_ROOT"]
 RUN = config["RUN"]
-SAMPLES_PE = config["samples_pe"] if config["samples_pe"] is not None else []
-SAMPLES_SE = config["samples_se"] if config["samples_se"] is not None else []
+SAMPLES_PE = config["samples_pe"] if "samples_pe" in config else []
+SAMPLES_SE = config["samples_se"] if "samples_se" in config else []
 
 # Path to programs (or element on path)
 trimmomatic = config["software"]["trimmomatic"]
