@@ -400,7 +400,7 @@ rule host_filter_pe:
             shell("""
                   set +u; {BOWTIE_ENV}; set -u
 
-                  bowtie2 -p $cpus -x {HOST_DB} --very-sensitive -1 ${input.forward} -2 {input.reverse} 2> {log.bowtie}| \
+                  bowtie2 -p {threads} -x {HOST_DB} --very-sensitive -1 ${input.forward} -2 {input.reverse} 2> {log.bowtie}| \
                   samtools view -f 12 -F 256 2> {log.other}| \
                   samtools sort -@ {threads} -n 2> {log.other} | \
                   samtools view -bS 2> {log.other} | \
