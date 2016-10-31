@@ -398,17 +398,16 @@ rule host_filter_pe:
 
                   bowtie2 -p {threads} -x {HOST_DB} --very-sensitive -1 {input.forward} -2 {input.reverse} 2> {log.bowtie}| \
                   samtools view -f 12 -F 256 2> {log.other}| \
-                  samtools sort -T %s -@ {threads} -n 2> {log.other} | \
+                  samtools sort -T {temp_dir} -@ {threads} -n 2> {log.other} | \
                   samtools view -bS 2> {log.other} | \
-                  bedtools bamtofastq -i - -fq %s/{params.forward_fn} -fq2 %s/{params.reverse_fn} 2> {log.other}
+                  bedtools bamtofastq -i - -fq {temp_dir}/{params.forward_fn} -fq2 {temp_dir}/{params.reverse_fn} 2> {log.other}
 
-                  {gzip} -c %s/{params.forward_fn} > {output.forward}
-                  {gzip} -c %s/{params.reverse_fn} > {output.reverse}
+                  {gzip} -c {temp_dir}/{params.forward_fn} > {output.forward}
+                  {gzip} -c {temp_dir}/{params.reverse_fn} > {output.reverse}
 
-                  bowtie2 -p {threads} -x {HOST_DB} --very-sensitive -U {input.unpaired_1} --un-gz %s/{params.unpaired_1_fn} -S /dev/null 2> {log.other}
-                  bowtie2 -p {threads} -x {HOST_DB} --very-sensitive -U {input.unpaired_2} --un-gz %s/{params.unpaired_2_fn} -S /dev/null 2> {log.other}
-                  scp %s/{params.unpaired_1_fn} {output.unpaired_1}
-                  scp %s/{params.unpaired_2_fn} {output.unpaired_2}
-                  """ % (temp_dir, temp_dir, temp_dir, temp_dir, temp_dir,
-                         temp_dir, temp_dir, temp_dir temp_dir))
+                  bowtie2 -p {threads} -x {HOST_DB} --very-sensitive -U {input.unpaired_1} --un-gz {temp_dir}/{params.unpaired_1_fn} -S /dev/null 2> {log.other}
+                  bowtie2 -p {threads} -x {HOST_DB} --very-sensitive -U {input.unpaired_2} --un-gz {temp_dir}/{params.unpaired_2_fn} -S /dev/null 2> {log.other}
+                  scp {temp_dir}/{params.unpaired_1_fn} {output.unpaired_1}
+                  scp {temp_dir}/{params.unpaired_2_fn} {output.unpaired_2}
+                  """
 
