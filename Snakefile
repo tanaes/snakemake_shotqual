@@ -409,5 +409,5 @@ rule host_filter_pe:
                   bowtie2 -p {threads} -x {HOST_DB} --very-sensitive -U {input.unpaired_2} --un-gz {temp_dir}/{params.unpaired_2_fn} -S /dev/null 2> {log.other}
                   scp {temp_dir}/{params.unpaired_1_fn} {output.unpaired_1}
                   scp {temp_dir}/{params.unpaired_2_fn} {output.unpaired_2}
-                  """
+                  """)
 
