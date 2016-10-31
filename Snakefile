@@ -339,7 +339,7 @@ rule multiQC_run:
     shell:
         """
         set +u; {QC_ENV}; set -u
-        multiqc -f -o data/multiQC/{wildcards.run} data/*/{wildcards.run} 2> {log} 1>&2
+        multiqc -f -o data/multiQC/{wildcards.run} data/*/{wildcards.run} logs/{wildcards.run} 2> {log} 1>&2
         """
 
 
@@ -364,7 +364,7 @@ rule multiQC_all:
     shell:
          """
          set +u; {QC_ENV}; set -u
-         multiqc -f -o data/multiQC/all data 2> {log} 1>&2
+         multiqc -f -o data/multiQC/all data logs 2> {log} 1>&2
          """
 
 
@@ -402,8 +402,11 @@ rule host_filter_pe:
                   samtools view -bS 2> {log.other} | \
                   bedtools bamtofastq -i - -fq {temp_dir}/{params.forward_fn} -fq2 {temp_dir}/{params.reverse_fn} 2> {log.other}
 
-                  {gzip} -c {temp_dir}/{params.forward_fn} > {output.forward}
-                  {gzip} -c {temp_dir}/{params.reverse_fn} > {output.reverse}
+                  {gzip} -c {temp_dir}/{params.forward_fn} > {temp_dir}/{params.forward_fn}.gz
+                  {gzip} -c {temp_dir}/{params.reverse_fn} > {temp_dir}/{params.reverse_fn}.gz
+
+                  scp {temp_dir}/{params.forward_fn}.gz {output.forward}
+                  scp {temp_dir}/{params.reverse_fn}.gz {output.reverse} 
 
                   bowtie2 -p {threads} -x {HOST_DB} --very-sensitive -U {input.unpaired_1} --un-gz {temp_dir}/{params.unpaired_1_fn} -S /dev/null 2> {log.other}
                   bowtie2 -p {threads} -x {HOST_DB} --very-sensitive -U {input.unpaired_2} --un-gz {temp_dir}/{params.unpaired_2_fn} -S /dev/null 2> {log.other}
