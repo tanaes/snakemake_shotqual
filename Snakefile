@@ -21,6 +21,10 @@ localrules: raw_make_links_pe, raw_make_links_se, multiQC_run, multiQC_all
 # (for example, source activate kneaddata) and is specified in config.yaml
 if "BOWTIE_ENV" in config:
     BOWTIE_ENV = config["BOWTIE_ENV"]
+if "TRIM_ENV" in config:
+    TRIM_ENV = config["TRIM_ENV"]
+if "QC_ENV" in config:
+    QC_ENV = config["QC_ENV"]
 
 # DB info
 if "HOST_DB" in config:
@@ -173,6 +177,7 @@ rule raw_fastqc_sample:
         "benchmarks/{run}/raw/fastqc_{sample}_{end}.json"
     shell:
         """
+        set +u; {QC_ENV}; set -u
         fastqc \
             --outdir data/{wildcards.sample}/{wildcards.run}/fastqc_raw \
             {input.fastq} \
@@ -224,6 +229,7 @@ rule qc_trimmomatic_pe:
     run:
         with tempfile.TemporaryDirectory(dir=TMP_DIR_ROOT) as temp_dir:
             shell("""
+                  set +u; {TRIM_ENV}; set -u
                   {trimmomatic} PE \
                     -threads {threads} \
                     -{params.phred} \
@@ -276,6 +282,7 @@ rule qc_trimmomatic_se:
     run:
         with tempfile.TemporaryDirectory(dir=TMP_DIR_ROOT) as temp_dir:
             shell("""
+                  set +u; {TRIM_ENV}; set -u
                   {trimmomatic} SE \
                       -threads {threads} \
                       -{params.phred} \
@@ -307,6 +314,7 @@ rule qc_fastqc:
         "benchmarks/{run}/qc/fastqc_trimmed_{sample}_{end}.json"
     shell:
         """
+        set +u; {QC_ENV}; set -u
         fastqc \
             --outdir data/{wildcards.sample}/{wildcards.run}/fastqc_trimmed \
             {input.fastq} 
@@ -334,7 +342,7 @@ rule multiQC_run:
         "benchmarks/{run}/qc/multiqc.json"
     shell:
         """
-        set +u; source activate multiqc; set -u
+        set +u; {QC_ENV}; set -u
         multiqc -f -o data/multiQC/{wildcards.run} data/*/{wildcards.run} 2> {log} 1>&2
         """
 
@@ -359,7 +367,7 @@ rule multiQC_all:
         "benchmarks/multiqc_all.json"
     shell:
          """
-         set +u; source activate multiqc; set -u
+         set +u; {QC_ENV}; set -u
          multiqc -f -o data/multiQC/all data 2> {log} 1>&2
          """
 
