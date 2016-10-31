@@ -404,10 +404,7 @@ rule host_filter_pe:
                   samtools view -f 12 -F 256 2> {log.other}| \
                   samtools sort -@ {threads} -n 2> {log.other} | \
                   samtools view -bS 2> {log.other} | \
-                  bedtools bamtofastq -i - -fq %s/{params.forward_fn} -fq2 {params.reverse_fn} 2> {log.other}
-
-                  cp %s/{params.forward_fn} %s/../{params.forward_fn}
-                  cp %s/{params.reverse_fn} %s/../{params.reverse_fn}
+                  bedtools bamtofastq -i - -fq %s/{params.forward_fn} -fq2 %s/{params.reverse_fn} 2> {log.other}
 
                   {gzip} -c %s/{params.forward_fn} > {output.forward}
                   {gzip} -c %s/{params.reverse_fn} > {output.reverse}
@@ -416,6 +413,6 @@ rule host_filter_pe:
                   bowtie2 -p {threads} -x {HOST_DB} --very-sensitive -U {input.unpaired_2} --un-gz %s/{params.unpaired_2_fn} -S /dev/null 2> {log.other}
                   scp %s/{params.unpaired_1_fn} {output.unpaired_1}
                   scp %s/{params.unpaired_2_fn} {output.unpaired_2}
-                  """ % (temp_dir, temp_dir, temp_dir, temp_dir,
-                         temp_dir, temp_dir, temp_dir, temp_dir, temp_dir, temp_dir, temp_dir))
+                  """ % (temp_dir, temp_dir, temp_dir, temp_dir, temp_dir,
+                         temp_dir, temp_dir, temp_dir, temp_dir, temp_dir))
 
