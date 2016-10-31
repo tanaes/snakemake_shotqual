@@ -134,8 +134,8 @@ rule raw_make_links_pe:
         "benchmarks/{run}/raw/make_links_pe_{sample}.json"
     shell:
         """
-        ln -s $(greadlink -f {input.forward}) {output.forward} 2> {log}
-        ln -s $(greadlink -f {input.reverse}) {output.reverse} 2>> {log}
+        ln -s $(readlink -f {input.forward}) {output.forward} 2> {log}
+        ln -s $(readlink -f {input.reverse}) {output.reverse} 2>> {log}
         """ 
 
 
@@ -152,7 +152,7 @@ rule raw_make_links_se:
         "benchmarks/{run}/raw/make_links_se_{sample}.json"
     shell:
         """
-        ln -s $(greadlink -f {input.single}) {output.single} 2>  {log}
+        ln -s $(readlink -f {input.single}) {output.single} 2>  {log}
         """ 
 
 
