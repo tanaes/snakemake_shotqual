@@ -4,6 +4,11 @@
         "n": 8,
         "mem": 8
     },
+    "host_filter_pe": {
+        "time": "8:00:00",
+        "n": 16,
+        "mem": 64
+    },
     "qc_trimmomatic_pe": {
         "time": "8:00:00",
         "n": 10,

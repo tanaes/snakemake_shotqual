@@ -385,7 +385,7 @@ rule host_filter_pe:
         unpaired_1_fn = "{sample}_U1.trimmed.host_filtered.fq.gz",
         unpaired_2_fn = "{sample}_U2.trimmed.host_filtered.fq.gz"
     threads:
-        8
+        16
     benchmark:
         "benchmarks/{run}/qc/host_filter_pe_{sample}.json"
     log:
@@ -398,7 +398,7 @@ rule host_filter_pe:
 
                   bowtie2 -p {threads} -x {HOST_DB} --very-sensitive -1 {input.forward} -2 {input.reverse} 2> {log.bowtie}| \
                   samtools view -f 12 -F 256 2> {log.other}| \
-                  samtools sort -@ {threads} -n 2> {log.other} | \
+                  samtools sort -T %s -@ {threads} -n 2> {log.other} | \
                   samtools view -bS 2> {log.other} | \
                   bedtools bamtofastq -i - -fq %s/{params.forward_fn} -fq2 %s/{params.reverse_fn} 2> {log.other}
 
@@ -410,5 +410,5 @@ rule host_filter_pe:
                   scp %s/{params.unpaired_1_fn} {output.unpaired_1}
                   scp %s/{params.unpaired_2_fn} {output.unpaired_2}
                   """ % (temp_dir, temp_dir, temp_dir, temp_dir, temp_dir,
-                         temp_dir, temp_dir, temp_dir))
+                         temp_dir, temp_dir, temp_dir temp_dir))
 
