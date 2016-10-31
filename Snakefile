@@ -81,6 +81,22 @@ rule all:
         ),
         "data/multiQC/all/multiqc_report.html"
 
+rule host_filter:
+    """
+    Rule to do all the Quality Control:
+        - raw_fastqc
+        - qc_trimmomatic_pe
+        - qc_trimmomatic_se
+        - qc_interleave_pe_pe
+        - qc_fastqc
+    """
+    input:
+        expand( # filtered fastqs
+                "data/{sample}/{run}/host_filtered/{sample}_{end}.trimmed.host_filtered.fq.gz",
+                sample = SAMPLES_PE,
+                run = RUN,
+                end = "R1 R2 U1 U2".split())
+
 
 rule raw_fastqc:
     """
