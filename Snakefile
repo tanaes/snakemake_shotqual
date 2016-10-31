@@ -360,8 +360,8 @@ rule host_filter_pe:
         unpaired_1 = "data/{sample}/{run}/host_filtered/{sample}_U1.trimmed.host_filtered.fq.gz",
         unpaired_2 = "data/{sample}/{run}/host_filtered/{sample}_U2.trimmed.host_filtered.fq.gz"
     params:
-        forward_fn = "{sample}_R1.trimmed.host_filtered.fq"
-        reverse_fn = "{sample}_R2.trimmed.host_filtered.fq"
+        forward_fn = "{sample}_R1.trimmed.host_filtered.fq",
+        reverse_fn = "{sample}_R2.trimmed.host_filtered.fq",
         unpaired_1_fn = "{sample}_U1.trimmed.host_filtered.fq.gz",
         unpaired_2_fn = "{sample}_U2.trimmed.host_filtered.fq.gz"
         filter_db = HOST_DB
@@ -370,13 +370,13 @@ rule host_filter_pe:
     benchmark:
         "benchmarks/{run}/qc/host_filter_pe_{sample}.json"
     log:
-        bowtie = "logs/{run}/bowtie/{sample}.log" 
+        bowtie = "logs/{run}/bowtie/{sample}.log",
         other = "logs/{run}/qc/host_filter_pe_{sample}.log" 
     run:
         with tempfile.TemporaryDirectory(dir=TMP_DIR_ROOT) as temp_dir:
             shell("""
                   set +u; {BOWTIE_ENV}; set -u
-                  
+
                   $bowtie2 -p $cpus -x {filter_db} --very-sensitive -1 ${input.forward} -2 {input.reverse} 2> {log.bowtie}| \
                   samtools view -f 12 -F 256 2> {log.other}| \
                   samtools sort -@ {threads} -n 2> {log.other} | \
