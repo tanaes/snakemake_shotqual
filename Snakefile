@@ -414,5 +414,5 @@ rule host_filter_pe:
                   scp %s/{params.unpaired_1_fn} {output.unpaired_1}
                   scp %s/{params.unpaired_2_fn} {output.unpaired_2}
                   """ % (temp_dir, temp_dir, temp_dir, temp_dir, temp_dir,
-                         temp_dir, temp_dir, temp_dir, temp_dir, temp_dir))
+                         temp_dir, temp_dir, temp_dir))
 
