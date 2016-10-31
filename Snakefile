@@ -23,8 +23,8 @@ if "BOWTIE_ENV" in config:
     BOWTIE_ENV = config["BOWTIE_ENV"]
 
 # DB info
-if "host_db" in config:
-    HOST_DB = config["host_db"]
+if "HOST_DB" in config:
+    HOST_DB = config["HOST_DB"]
 
 #### Top-level rules: rules to execute a subset of the pipeline
 
@@ -363,7 +363,7 @@ rule host_filter_pe:
         forward_fn = "{sample}_R1.trimmed.host_filtered.fq",
         reverse_fn = "{sample}_R2.trimmed.host_filtered.fq",
         unpaired_1_fn = "{sample}_U1.trimmed.host_filtered.fq.gz",
-        unpaired_2_fn = "{sample}_U2.trimmed.host_filtered.fq.gz"
+        unpaired_2_fn = "{sample}_U2.trimmed.host_filtered.fq.gz",
         filter_db = HOST_DB
     threads:
         8
