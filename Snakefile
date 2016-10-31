@@ -179,9 +179,7 @@ rule raw_fastqc_sample:
         """
         set +u; {QC_ENV}; set -u
         fastqc \
-            --outdir data/{wildcards.sample}/{wildcards.run}/fastqc_raw \
-            {input.fastq} \
-        2> {log} 1>&2
+            --outdir data/{wildcards.sample}/{wildcards.run}/fastqc_raw {input.fastq} 2> {log} 1>&2
         """
 
 
@@ -316,9 +314,7 @@ rule qc_fastqc:
         """
         set +u; {QC_ENV}; set -u
         fastqc \
-            --outdir data/{wildcards.sample}/{wildcards.run}/fastqc_trimmed \
-            {input.fastq} 
-        2> {log} 1>&2
+            --outdir data/{wildcards.sample}/{wildcards.run}/fastqc_trimmed {input.fastq} 2> {log} 1>&2
         """
 
 
