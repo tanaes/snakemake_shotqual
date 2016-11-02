@@ -25,10 +25,18 @@ if "TRIM_ENV" in config:
     TRIM_ENV = config["TRIM_ENV"]
 if "QC_ENV" in config:
     QC_ENV = config["QC_ENV"]
+if "HUMANN2_ENV" in config:
+    HUMANN2_ENV = config["HUMANN2_ENV"]
 
 # DB info
 if "HOST_DB" in config:
     HOST_DB = config["HOST_DB"]
+if "METAPHLAN_DIR" in config:
+    METAPHLAN_DIR = config["METAPHLAN_DIR"]
+if "HUMANN2_NT_DB" in config:
+    HUMANN2_NT_DB = config["HUMANN2_NT_DB"]
+if "HUMANN2_AA_DB" in config:
+    HUMANN2_AA_DB = config["HUMANN2_AA_DB"]
 
 #### Top-level rules: rules to execute a subset of the pipeline
 
@@ -413,4 +421,119 @@ rule host_filter_pe:
                   scp {temp_dir}/{params.unpaired_1_fn} {output.unpaired_1}
                   scp {temp_dir}/{params.unpaired_2_fn} {output.unpaired_2}
                   """)
+
+
+
+rule metaphlan2_sample_pe:
+    """
+    Runs MetaPhlan2 on a set of samples to create a joint taxonomic profile for
+    input into HUMAnN2.
+    Going to do just R1 reads for now. Because of how I've split PE vs SE
+    processing and naming, still will need to make a separate rule for PE. 
+    """
+    input:
+        paired_f  = "data/{sample}/{run}/host_filtered/{sample}_R1.trimmed.host_filtered.fq.gz",
+        unpaired_f = "data/{sample}/{run}/host_filtered/{sample}_U1.trimmed.host_filtered.fq.gz"
+    output:
+        "data/{sample}/{run}/metaphlan2/{sample}_metaphlan_output.tsv"
+    threads:
+        8
+    log:
+        "logs/{run}/analysis/metaphlan2_sample_pe_{sample}.log"
+    benchmark:
+        "benchmarks/{run}/analysis/metaphlan2_sample_pe_{sample}.json"
+    run:
+        with tempfile.TemporaryDirectory(dir=TMP_DIR_ROOT) as temp_dir:
+            shell("""
+                  set +u; {METAPHLAN_ENV}; set -u
+
+                  zcat {input.paired_f} {input.unpaired_f} > {temp_dir}/input.fastq
+
+                  metaphlan2.py {temp_dir}/input.fastq \
+                    --input_type fastq \
+                    --mpa_pkl {METAPHLAN_DIR}/db_v20/mpa_v20_m200.pkl \
+                    --bowtie2db {METAPHLAN_DIR}/db_v20/mpa_v20_m200 \
+                    --nproc {threads} \
+                    --tmp_dir {temp_dir} \
+                    --no_map \
+                    --input_type fastq > {output}
+                  """)
+
+
+rule combine_metaphlan:
+    """
+    Combines MetaPhlan2 output for unified taxonomic profile for Humann2
+    """
+
+    input:
+        expand("data/{sample}/{run}/metaphlan2/{sample}_metaphlan_output.tsv",
+               sample=SAMPLES_PE, run=RUN)
+    output:
+        joint_prof = "data/combined_analysis/{run}/humann2/joined_taxonomic_profile.tsv",
+        max_prof = "data/combined_analysis/{run}/humann2/joined_taxonomic_profile_max.tsv"
+    threads:
+        1
+    log:
+        "logs/{run}/analysis/combine_metaphlan.log"
+    benchmark:
+        "benchmarks/{run}/analysis/combine_metaphlan.json"
+    run:
+        with tempfile.TemporaryDirectory(dir=TMP_DIR_ROOT) as temp_dir:
+            for file in input:
+                shell("cp {0} {1}/.".format(file, temp_dir))
+            shell("""
+                  humann2_join_tables --input {temp_dir} --output {output.joint_prof}
+                  humann2_reduce_table --input {output.joint_prof} \
+                  --output {output.max_prof} --function max --sort-by level
+                  """)
+
+
+rule humann2_sample_pe:
+    """
+    Runs HUMAnN2 pipeline using general defaults.
+
+    Going to do just R1 reads for now. Because of how I've split PE vs SE
+    processing and naming, still will need to make a separate rule for PE. 
+    """
+    input:
+        paired_f  = "data/{sample}/{run}/kneaddata/{sample}_kneaddata_paired_R1.fq.gz",
+        unpaired_f = "data/{sample}/{run}/kneaddata/{sample}_kneaddata_unmatched_R1.fq.gz"
+        metaphlan_in = "data/combined_analysis/{run}/humann2/joined_taxonomic_profile_max.tsv"
+    output:
+        genefamilies = "data/{sample}/{run}/humann2/{sample}_genefamilies.tsv",
+        pathcoverage = "data/{sample}/{run}/humann2/{sample}_pathcoverage.tsv",
+        pathabundance = "data/{sample}/{run}/humann2/{sample}_pathabundance.tsv",
+        bugslist = "data/{sample}/{run}/humann2/{sample}_metaphlan_bugs_list.tsv"
+    threads:
+        8
+    log:
+        "logs/{run}/analysis/humann2_sample_pe_{sample}.log"
+    benchmark:
+        "benchmarks/{run}/analysis/humann2_sample_pe_{sample}.json"
+    run:
+        with tempfile.TemporaryDirectory(dir=TMP_DIR_ROOT) as temp_dir:
+            shell("""
+                  zcat {input.paired_f} {input.unpaired_f} >{temp_dir}/input.fastq
+
+                  humann2 --input{temp_dir}/input.fastq \
+                  --output{temp_dir}/{wildcards.sample} \
+                  --output-basename {wildcards.sample} \
+                  --nucleotide-database {HUMANN2_NT_DB} \
+                  --protein-database {HUMANN2_AA_DB} \
+                  --taxonomic-profile {input.metaphlan_in}
+
+                  scp{temp_dir}/{wildcards.sample}/{wildcards.sample}_genefamilies.tsv {output.genefamilies}
+                  scp{temp_dir}/{wildcards.sample}/{wildcards.sample}_pathcoverage.tsv {output.pathcoverage}
+                  scp{temp_dir}/{wildcards.sample}/{wildcards.sample}_pathabundance.tsv {output.pathabundance}
+
+                  scp{temp_dir}/{wildcards.sample}/{wildcards.sample}_humann2_temp/{wildcards.sample}_metaphlan_bugs_list.tsv {output.bugslist}
+                  """)
+
+# rule humann2_combine_tables
+#     input:
+#         gene_table = "data/{sample}/{run}/humann2/{sample}_genetable.txt",
+#     output:
+#         combined_gene_table = "data/combined_analysis/{run}/humann2/combined_gene_tables.tsv"
+
+
 
