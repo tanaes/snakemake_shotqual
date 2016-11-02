@@ -530,14 +530,15 @@ rule humann2_sample_pe:
             shell("""
                   set +u; {HUMANN2_ENV}; set -u
 
-                  zcat {input.paired_f} {input.unpaired_f} >{temp_dir}/input.fastq
+                  zcat {input.paired_f} {input.unpaired_f} > {temp_dir}/input.fastq
 
                   humann2 --input {temp_dir}/input.fastq \
                   --output {temp_dir}/{wildcards.sample} \
                   --output-basename {wildcards.sample} \
                   --nucleotide-database {HUMANN2_NT_DB} \
                   --protein-database {HUMANN2_AA_DB} \
-                  --taxonomic-profile {input.metaphlan_in}
+                  --taxonomic-profile {input.metaphlan_in} \
+                  --metaphlan {METAPHLAN_DIR}
 
                   scp {temp_dir}/{wildcards.sample}/{wildcards.sample}_genefamilies.tsv {output.genefamilies}
                   scp {temp_dir}/{wildcards.sample}/{wildcards.sample}_pathcoverage.tsv {output.pathcoverage}
