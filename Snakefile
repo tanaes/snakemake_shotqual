@@ -27,6 +27,8 @@ if "QC_ENV" in config:
     QC_ENV = config["QC_ENV"]
 if "HUMANN2_ENV" in config:
     HUMANN2_ENV = config["HUMANN2_ENV"]
+if "METAPHLAN_ENV" in config:
+    METAPHLAN_ENV = config["METAPHLAN_ENV"]
 
 # DB info
 if "HOST_DB" in config:
