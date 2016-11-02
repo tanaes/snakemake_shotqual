@@ -517,8 +517,7 @@ rule humann2_sample_pe:
     output:
         genefamilies = "data/{sample}/{run}/humann2/{sample}_genefamilies.tsv",
         pathcoverage = "data/{sample}/{run}/humann2/{sample}_pathcoverage.tsv",
-        pathabundance = "data/{sample}/{run}/humann2/{sample}_pathabundance.tsv",
-        bugslist = "data/{sample}/{run}/humann2/{sample}_metaphlan_bugs_list.tsv"
+        pathabundance = "data/{sample}/{run}/humann2/{sample}_pathabundance.tsv"
     threads:
         8
     log:
@@ -546,8 +545,6 @@ rule humann2_sample_pe:
                   scp {temp_dir}/{wildcards.sample}/{wildcards.sample}_genefamilies.tsv {output.genefamilies}
                   scp {temp_dir}/{wildcards.sample}/{wildcards.sample}_pathcoverage.tsv {output.pathcoverage}
                   scp {temp_dir}/{wildcards.sample}/{wildcards.sample}_pathabundance.tsv {output.pathabundance}
-
-                  scp {temp_dir}/{wildcards.sample}/{wildcards.sample}_humann2_temp/{wildcards.sample}_metaphlan_bugs_list.tsv {output.bugslist}
                   """)
 
 # rule humann2_combine_tables
