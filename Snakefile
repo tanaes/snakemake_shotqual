@@ -462,7 +462,7 @@ rule metaphlan2_sample_pe:
 
                   zcat {input.paired_f} {input.unpaired_f} > {temp_dir}/input.fastq
 
-                  metaphlan2.py {temp_dir}/input.fastq \
+                  {METAPHLAN_DIR}/metaphlan2.py {temp_dir}/input.fastq \
                     --input_type fastq \
                     --mpa_pkl {METAPHLAN_DIR}/db_v20/mpa_v20_m200.pkl \
                     --bowtie2db {METAPHLAN_DIR}/db_v20/mpa_v20_m200 \
