@@ -109,6 +109,17 @@ rule host_filter:
                 run = RUN,
                 end = "R1 R2 U1 U2".split())
 
+rule humann2:
+    """
+    Rule to do Humann2
+    """
+    input:
+        expand(# filtered fastqs
+               "data/{sample}/{run}/humann2/{sample}_genefamilies.tsv",
+               sample = SAMPLES_PE,
+               run = RUN,
+               end = "R1 R2 U1 U2".split())
+
 
 rule raw_fastqc:
     """
@@ -482,6 +493,8 @@ rule combine_metaphlan:
             for file in input:
                 shell("cp {0} {1}/.".format(file, temp_dir))
             shell("""
+                  set +u; {HUMANN2_ENV}; set -u
+
                   humann2_join_tables --input {temp_dir} --output {output.joint_prof}
                   humann2_reduce_table --input {output.joint_prof} \
                   --output {output.max_prof} --function max --sort-by level
@@ -496,8 +509,8 @@ rule humann2_sample_pe:
     processing and naming, still will need to make a separate rule for PE. 
     """
     input:
-        paired_f  = "data/{sample}/{run}/kneaddata/{sample}_kneaddata_paired_R1.fq.gz",
-        unpaired_f = "data/{sample}/{run}/kneaddata/{sample}_kneaddata_unmatched_R1.fq.gz"
+        paired_f  = "data/{sample}/{run}/host_filtered/{sample}_R1.trimmed.host_filtered.fq.gz",
+        unpaired_f = "data/{sample}/{run}/host_filtered/{sample}_U1.trimmed.host_filtered.fq.gz",
         metaphlan_in = "data/combined_analysis/{run}/humann2/joined_taxonomic_profile_max.tsv"
     output:
         genefamilies = "data/{sample}/{run}/humann2/{sample}_genefamilies.tsv",
@@ -513,6 +526,8 @@ rule humann2_sample_pe:
     run:
         with tempfile.TemporaryDirectory(dir=TMP_DIR_ROOT) as temp_dir:
             shell("""
+                  set +u; {HUMANN2_ENV}; set -u
+
                   zcat {input.paired_f} {input.unpaired_f} >{temp_dir}/input.fastq
 
                   humann2 --input{temp_dir}/input.fastq \
