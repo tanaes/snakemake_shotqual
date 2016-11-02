@@ -532,18 +532,18 @@ rule humann2_sample_pe:
 
                   zcat {input.paired_f} {input.unpaired_f} >{temp_dir}/input.fastq
 
-                  humann2 --input{temp_dir}/input.fastq \
-                  --output{temp_dir}/{wildcards.sample} \
+                  humann2 --input {temp_dir}/input.fastq \
+                  --output {temp_dir}/{wildcards.sample} \
                   --output-basename {wildcards.sample} \
                   --nucleotide-database {HUMANN2_NT_DB} \
                   --protein-database {HUMANN2_AA_DB} \
                   --taxonomic-profile {input.metaphlan_in}
 
-                  scp{temp_dir}/{wildcards.sample}/{wildcards.sample}_genefamilies.tsv {output.genefamilies}
-                  scp{temp_dir}/{wildcards.sample}/{wildcards.sample}_pathcoverage.tsv {output.pathcoverage}
-                  scp{temp_dir}/{wildcards.sample}/{wildcards.sample}_pathabundance.tsv {output.pathabundance}
+                  scp {temp_dir}/{wildcards.sample}/{wildcards.sample}_genefamilies.tsv {output.genefamilies}
+                  scp {temp_dir}/{wildcards.sample}/{wildcards.sample}_pathcoverage.tsv {output.pathcoverage}
+                  scp {temp_dir}/{wildcards.sample}/{wildcards.sample}_pathabundance.tsv {output.pathabundance}
 
-                  scp{temp_dir}/{wildcards.sample}/{wildcards.sample}_humann2_temp/{wildcards.sample}_metaphlan_bugs_list.tsv {output.bugslist}
+                  scp {temp_dir}/{wildcards.sample}/{wildcards.sample}_humann2_temp/{wildcards.sample}_metaphlan_bugs_list.tsv {output.bugslist}
                   """)
 
 # rule humann2_combine_tables
