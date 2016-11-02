@@ -538,7 +538,10 @@ rule humann2_sample_pe:
                   --nucleotide-database {HUMANN2_NT_DB} \
                   --protein-database {HUMANN2_AA_DB} \
                   --taxonomic-profile {input.metaphlan_in} \
-                  --metaphlan {METAPHLAN_DIR}
+                  --metaphlan {METAPHLAN_DIR} \
+                  --o-log {log} \
+                  --threads {threads}
+
 
                   scp {temp_dir}/{wildcards.sample}/{wildcards.sample}_genefamilies.tsv {output.genefamilies}
                   scp {temp_dir}/{wildcards.sample}/{wildcards.sample}_pathcoverage.tsv {output.pathcoverage}
