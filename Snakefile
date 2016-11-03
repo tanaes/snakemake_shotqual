@@ -580,6 +580,14 @@ rule humann2_renorm_tables:
               humann2_renorm_table --input {input.genefamilies} \
               --output {output.genefamilies} \
               --units {wildcards.norm}
+
+              humann2_renorm_table --input {input.pathcoverage} \
+              --output {output.pathcoverage} \
+              --units {wildcards.norm}
+
+              humann2_renorm_table --input {input.pathabundance} \
+              --output {output.pathabundance} \
+              --units {wildcards.norm}
               """)
 
 rule humann2_combine_tables:
@@ -631,23 +639,17 @@ rule humann2_split_stratified_tables:
         pathcoverage_unstrat = "data/combined_analysis/{run}/humann2/stratified/combined_pathcoverage.{norm}_unstratified.biom",
         pathabundance_unstrat = "data/combined_analysis/{run}/humann2/stratified/combined_pathabundance.{norm}_unstratified.biom"
     run:
-        with tempfile.TemporaryDirectory(dir='data/combined_analysis') as temp_dir:
-            shell("""
-                  set +u; {HUMANN2_ENV}; set -u
+        shell("""
+              set +u; {HUMANN2_ENV}; set -u
 
-                  humann2_join_tables --input {input.genefamilies} \
-                  --output {temp_dir} \
-                  --file_name genefamilies
+              humann2_split_stratified_table --input {input.genefamilies} \
+              --output data/combined_analysis/{wildcards.run}/humann2/stratified
 
-                  humann2_join_tables --input {input.genefamilies} \
-                  --output {temp_dir} \
-                  --file_name pathcoverage
+              humann2_split_stratified_table --input {input.pathcoverage} \
+              --output data/combined_analysis/{wildcards.run}/humann2/stratified
 
-                  humann2_join_tables --input {input.genefamilies} \
-                  --output {temp_dir} \
-                  --file_name pathabundance
-                  
-                  scp {temp_dir}/* data/combined_analysis/{run}/humann2/stratified/.
-                  """)
+              humann2_split_stratified_table --input {input.pathabundance} \
+              --output data/combined_analysis/{wildcards.run}/humann2/stratified
+              """)
 
 
