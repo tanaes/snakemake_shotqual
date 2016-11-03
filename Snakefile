@@ -10,8 +10,8 @@ SAMPLES_PE = config["samples_pe"] if "samples_pe" in config else []
 SAMPLES_SE = config["samples_se"] if "samples_se" in config else []
 
 # Path to programs
-trimmomatic = config["software"]["trimmomatic"]
-gzip        = config["software"]["gzip"]
+trimmomatic = config["SOFTWARE"]["trimmomatic"]
+gzip        = config["SOFTWARE"]["gzip"]
 
 # These rules are not processor intensive, and will execute on the head node
 # without being allocated to compute nodes
@@ -19,27 +19,29 @@ localrules: raw_make_links_pe, raw_make_links_se, multiQC_run, multiQC_all
 
 # This specifices the environment setup command for running compute jobs
 # (for example, source activate kneaddata) and is specified in config.yaml
-if "BOWTIE_ENV" in config:
-    BOWTIE_ENV = config["BOWTIE_ENV"]
-if "TRIM_ENV" in config:
-    TRIM_ENV = config["TRIM_ENV"]
-if "QC_ENV" in config:
-    QC_ENV = config["QC_ENV"]
-if "HUMANN2_ENV" in config:
-    HUMANN2_ENV = config["HUMANN2_ENV"]
-if "METAPHLAN_ENV" in config:
-    METAPHLAN_ENV = config["METAPHLAN_ENV"]
+if "BOWTIE_ENV" in config["ENVS"]:
+    BOWTIE_ENV = config["ENVS"]["BOWTIE_ENV"]
+if "TRIM_ENV" in config["ENVS"]:
+    TRIM_ENV = config["ENVS"]["TRIM_ENV"]
+if "QC_ENV" in config["ENVS"]:
+    QC_ENV = config["ENVS"]["QC_ENV"]
+if "HUMANN2_ENV" in config["ENVS"]:
+    HUMANN2_ENV = config["ENVS"]["HUMANN2_ENV"]
+if "METAPHLAN_ENV" in config["ENVS"]:
+    METAPHLAN_ENV = config["ENVS"]["METAPHLAN_ENV"]
 
 # DB info
 if "HOST_DB" in config:
     HOST_DB = config["HOST_DB"]
 
+# Trimmomatic params
+
 # HUMAnN2 params
-if "HUMANN2_PARMS" in config:
-    NORMS = config['HUMANN2_PARAMS']['NORMS']
-    METAPHLAN_DIR = config['HUMANN2_PARAMS']["METAPHLAN_DIR"]
-    HUMANN2_NT_DB = config['HUMANN2_PARAMS']["HUMANN2_NT_DB"]
-    HUMANN2_AA_DB = config['HUMANN2_PARAMS']["HUMANN2_AA_DB"]
+if "HUMANN2" in config['PARAMS']:
+    NORMS = config['PARAMS']['HUMANN2']['NORMS']
+    METAPHLAN_DIR = config['PARAMS']['HUMANN2']["METAPHLAN_DIR"]
+    HUMANN2_NT_DB = config['PARAMS']['HUMANN2']["HUMANN2_NT_DB"]
+    HUMANN2_AA_DB = config['PARAMS']['HUMANN2']["HUMANN2_AA_DB"]
 
 #### Top-level rules: rules to execute a subset of the pipeline
 
@@ -118,7 +120,12 @@ rule humann2:
     """
     input:
         expand(# filtered fastqs
-               "data/{sample}/{run}/humann2/{sample}_genefamilies.tsv",
+               "data/combined_analysis/{run}/humann2/stratified/combined_genefamilies.{norm}_stratified.biom",
+               norm = NORMS,
+               run = RUN),
+        expand(# filtered fastqs
+               "data/{sample}/{run}/humann2/{sample}_genefamilies.{norm}.biom",
+               norm = SAMPLES_PE,
                sample = SAMPLES_PE,
                run = RUN,
                end = "R1 R2 U1 U2".split())
@@ -239,7 +246,8 @@ rule qc_trimmomatic_pe:
         unpaired = "{sample}_up.trimmed.fq.gz",
         adaptor     = lambda wildcards: config["samples_pe"][wildcards.sample]["adaptor"],
         phred       = lambda wildcards: config["samples_pe"][wildcards.sample]["phred"],
-        trimmomatic_params = config["trimmomatic_params"]
+        trimmomatic_params = config['PARAMS']['TRIMMOMATIC']["QUAL"],
+        trimmomatic_clip = config['PARAMS']['TRIMMOMATIC']["ILLUMINACLIP"]
     benchmark:
         "benchmarks/{run}/qc/trimmomatic_pe_{sample}.json"
     log:
@@ -259,7 +267,7 @@ rule qc_trimmomatic_pe:
                     %s/{params.unpaired_1} \
                     %s/{params.reverse} \
                     %s/{params.unpaired_2} \
-                    ILLUMINACLIP:{params.adaptor}:2:30:10 \
+                    ILLUMINACLIP:{params.adaptor}:{params.trimmomatic_clip} \
                     {params.trimmomatic_params} \
                   2> {log}
                   
@@ -292,7 +300,8 @@ rule qc_trimmomatic_se:
         single = "{sample}_SE.trimmed.fq.gz",
         adaptor     = lambda wildcards: config["samples_se"][wildcards.sample]["adaptor"],
         phred       = lambda wildcards: config["samples_se"][wildcards.sample]["phred"],
-        trimmomatic_params = config["trimmomatic_params"]
+        trimmomatic_params = config['PARAMS']['TRIMMOMATIC']["QUAL"],
+        trimmomatic_clip = config['PARAMS']['TRIMMOMATIC']["ILLUMINACLIP"]
     benchmark:
         "benchmarks/{run}/qc/trimmomatic_se_{sample}.json"
     log:
@@ -308,8 +317,8 @@ rule qc_trimmomatic_se:
                       -{params.phred} \
                       {input.single} \
                       %s/{params.single} \
-                      ILLUMINACLIP:{params.adaptor}:2:30:10 \
-                      {params.trimmomatic_params} \
+                    ILLUMINACLIP:{params.adaptor}:{params.trimmomatic_clip} \
+                    {params.trimmomatic_params} \
                   2> {log}
 
                   scp %s/{params.single} {output.single} 
@@ -610,7 +619,7 @@ rule humann2_split_stratified_tables:
     output:
         genefamilies = "data/combined_analysis/{run}/humann2/stratified/combined_genefamilies.{norm}_stratified.biom",
         pathcoverage = "data/combined_analysis/{run}/humann2/stratified/combined_pathcoverage.{norm}_stratified.biom",
-        pathabundance = "data/combined_analysis/{run}/humann2/stratified/combined_pathabundance.{norm}_stratified.biom"
+        pathabundance = "data/combined_analysis/{run}/humann2/stratified/combined_pathabundance.{norm}_stratified.biom",
         genefamilies_unstrat = "data/combined_analysis/{run}/humann2/stratified/combined_genefamilies.{norm}_unstratified.biom",
         pathcoverage_unstrat = "data/combined_analysis/{run}/humann2/stratified/combined_pathcoverage.{norm}_unstratified.biom",
         pathabundance_unstrat = "data/combined_analysis/{run}/humann2/stratified/combined_pathabundance.{norm}_unstratified.biom"
