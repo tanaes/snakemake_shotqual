@@ -1,0 +1,34 @@
+TMP_DIR_ROOT: /localscratch
+RUN: Run1
+HOST_DB: /projects/mammal_glycans/haddad_mice/dbs/mouse/mouse
+ENVS:
+  BOTWIE_ENV: source activate kneaddata
+  HUMANN2_ENV: source activate kneaddata
+  KNEAD_ENV: source activate kneaddata
+  QC_ENV: source activate kneaddata
+  TRIM_ENV: source activate kneaddata
+SOFTWARE:
+  gzip: gzip
+  trimmomatic: $CONDA_ENV_PATH/share/trimmomatic-*/trimmomatic
+PARAMS:
+  HUMANN2:
+    HUMANN2_AA_DB: /home/jgsanders/ref_data/humann2/uniref
+    HUMANN2_NT_DB: /home/jgsanders/ref_data/humann2/chocophlan
+    METAPHLAN_DIR: /home/jgsanders/miniconda/envs/kneaddata/share/metaphlan2
+    NORMS:
+    - cpm
+    - relab
+  TRIMMOMATIC:
+    ILLUMINACLIP: '2:30:10'
+    QUAL: LEADING:20 TRAILING:20 AVGQUAL:30 MINLEN:32 TOPHRED33
+samples_pe:
+  sample1:
+    adaptor: /home/jgsanders/git_sw/git_bin/Trimmomatic-0.36/adapters/TruSeq3-PE-2.fa
+    forward: ./example/reads/Run1/sample1_S312_R1_L001.fastq.gz
+    phred: phred33
+    reverse: ./example/reads/Run1/sample1_S312_R2_L001.fastq.gz
+  sample2:
+    adaptor: /home/jgsanders/git_sw/git_bin/Trimmomatic-0.36/adapters/TruSeq3-PE-2.fa
+    forward: ./example/reads/Run1/sample2_S521_R1_L001.fastq.gz
+    phred: phred33
+    reverse: ./example/reads/Run1/sample2_S521_R2_L001.fastq.gz
