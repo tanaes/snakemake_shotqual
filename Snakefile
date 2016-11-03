@@ -33,12 +33,13 @@ if "METAPHLAN_ENV" in config:
 # DB info
 if "HOST_DB" in config:
     HOST_DB = config["HOST_DB"]
-if "METAPHLAN_DIR" in config:
-    METAPHLAN_DIR = config["METAPHLAN_DIR"]
-if "HUMANN2_NT_DB" in config:
-    HUMANN2_NT_DB = config["HUMANN2_NT_DB"]
-if "HUMANN2_AA_DB" in config:
-    HUMANN2_AA_DB = config["HUMANN2_AA_DB"]
+
+# HUMAnN2 params
+if "HUMANN2_PARMS" in config:
+    NORMS = config['HUMANN2_PARAMS']['NORMS']
+    METAPHLAN_DIR = config['HUMANN2_PARAMS']["METAPHLAN_DIR"]
+    HUMANN2_NT_DB = config['HUMANN2_PARAMS']["HUMANN2_NT_DB"]
+    HUMANN2_AA_DB = config['HUMANN2_PARAMS']["HUMANN2_AA_DB"]
 
 #### Top-level rules: rules to execute a subset of the pipeline
 
@@ -515,9 +516,9 @@ rule humann2_sample_pe:
         unpaired_f = "data/{sample}/{run}/host_filtered/{sample}_U1.trimmed.host_filtered.fq.gz",
         metaphlan_in = "data/combined_analysis/{run}/humann2/joined_taxonomic_profile_max.tsv"
     output:
-        genefamilies = "data/{sample}/{run}/humann2/{sample}_genefamilies.tsv",
-        pathcoverage = "data/{sample}/{run}/humann2/{sample}_pathcoverage.tsv",
-        pathabundance = "data/{sample}/{run}/humann2/{sample}_pathabundance.tsv"
+        genefamilies = "data/{sample}/{run}/humann2/{sample}_genefamilies.biom",
+        pathcoverage = "data/{sample}/{run}/humann2/{sample}_pathcoverage.biom",
+        pathabundance = "data/{sample}/{run}/humann2/{sample}_pathabundance.biom"
     threads:
         8
     log:
@@ -542,16 +543,95 @@ rule humann2_sample_pe:
                   --threads {threads}
 
 
-                  scp {temp_dir}/{wildcards.sample}/{wildcards.sample}_genefamilies.tsv {output.genefamilies}
-                  scp {temp_dir}/{wildcards.sample}/{wildcards.sample}_pathcoverage.tsv {output.pathcoverage}
-                  scp {temp_dir}/{wildcards.sample}/{wildcards.sample}_pathabundance.tsv {output.pathabundance}
+                  scp {temp_dir}/{wildcards.sample}/{wildcards.sample}_genefamilies.biom {output.genefamilies}
+                  scp {temp_dir}/{wildcards.sample}/{wildcards.sample}_pathcoverage.biom {output.pathcoverage}
+                  scp {temp_dir}/{wildcards.sample}/{wildcards.sample}_pathabundance.biom {output.pathabundance}
                   """)
 
-# rule humann2_combine_tables
-#     input:
-#         gene_table = "data/{sample}/{run}/humann2/{sample}_genetable.txt",
-#     output:
-#         combined_gene_table = "data/combined_analysis/{run}/humann2/combined_gene_tables.tsv"
+rule humann2_renorm_tables:
+    input:
+        genefamilies = "data/{sample}/{run}/humann2/{sample}_genefamilies.biom",
+        pathcoverage = "data/{sample}/{run}/humann2/{sample}_pathcoverage.biom",
+        pathabundance = "data/{sample}/{run}/humann2/{sample}_pathabundance.biom"
+    output:
+        genefamilies = "data/{sample}/{run}/humann2/{sample}_genefamilies.{norm}.biom",
+        pathcoverage = "data/{sample}/{run}/humann2/{sample}_pathcoverage.{norm}.biom",
+        pathabundance = "data/{sample}/{run}/humann2/{sample}_pathabundance.{norm}.biom"
+    threads:
+        1
+    log:
+        "logs/{run}/analysis/humann2_renorm_tables_{sample}.log"
+    benchmark:
+        "benchmarks/{run}/analysis/humann2_renorm_tables_{sample}.json"
+    run:
+        shell("""
+              humann2_renorm_table --input {input.genefamilies} \
+              --output {output.genefamilies} \
+              --units {wildcards.norm}
+              """)
 
+rule humann2_combine_tables:
+    input:
+        expand("data/{sample}/{run}/humann2/{sample}_genefamilies.{norm}.biom",
+               sample=SAMPLES_PE, run=RUN, norm=NORMS),
+        expand("data/{sample}/{run}/humann2/{sample}_pathcoverage.{norm}.biom",
+               sample=SAMPLES_PE, run=RUN, norm=NORMS),
+        expand("data/{sample}/{run}/humann2/{sample}_pathabundance.{norm}.biom",
+               sample=SAMPLES_PE, run=RUN, norm=NORMS)
+    output:
+        genefamilies = "data/combined_analysis/{run}/humann2/combined_genefamilies.{norm}.biom",
+        pathcoverage = "data/combined_analysis/{run}/humann2/combined_pathcoverage.{norm}.biom",
+        pathabundance = "data/combined_analysis/{run}/humann2/combined_pathabundance.{norm}.biom"
+    run:
+        with tempfile.TemporaryDirectory(dir='data/combined_analysis') as temp_dir:
+            for file in input:
+                shell("cp {0} {1}/.".format(file, temp_dir))
+            shell("""
+                  set +u; {HUMANN2_ENV}; set -u
+
+                  humann2_join_tables --input {temp_dir} \
+                  --output {output.genefamilies} \
+                  --file_name genefamilies
+
+                  humann2_join_tables --input {temp_dir} \
+                  --output {output.pathcoverage} \
+                  --file_name pathcoverage
+
+                  humann2_join_tables --input {temp_dir} \
+                  --output {output.pathabundance} \
+                  --file_name pathabundance
+                  """)
+
+rule humann2_split_stratified_tables:
+    input:
+        genefamilies = "data/combined_analysis/{run}/humann2/combined_genefamilies.{norm}.biom",
+        pathcoverage = "data/combined_analysis/{run}/humann2/combined_pathcoverage.{norm}.biom",
+        pathabundance = "data/combined_analysis/{run}/humann2/combined_pathabundance.{norm}.biom"
+    output:
+        genefamilies = "data/combined_analysis/{run}/humann2/stratified/combined_genefamilies.{norm}_stratified.biom",
+        pathcoverage = "data/combined_analysis/{run}/humann2/stratified/combined_pathcoverage.{norm}_stratified.biom",
+        pathabundance = "data/combined_analysis/{run}/humann2/stratified/combined_pathabundance.{norm}_stratified.biom"
+        genefamilies_unstrat = "data/combined_analysis/{run}/humann2/stratified/combined_genefamilies.{norm}_unstratified.biom",
+        pathcoverage_unstrat = "data/combined_analysis/{run}/humann2/stratified/combined_pathcoverage.{norm}_unstratified.biom",
+        pathabundance_unstrat = "data/combined_analysis/{run}/humann2/stratified/combined_pathabundance.{norm}_unstratified.biom"
+    run:
+        with tempfile.TemporaryDirectory(dir='data/combined_analysis') as temp_dir:
+            shell("""
+                  set +u; {HUMANN2_ENV}; set -u
+
+                  humann2_join_tables --input {input.genefamilies} \
+                  --output {temp_dir} \
+                  --file_name genefamilies
+
+                  humann2_join_tables --input {input.genefamilies} \
+                  --output {temp_dir} \
+                  --file_name pathcoverage
+
+                  humann2_join_tables --input {input.genefamilies} \
+                  --output {temp_dir} \
+                  --file_name pathabundance
+                  
+                  scp {temp_dir}/* data/combined_analysis/{run}/humann2/stratified/.
+                  """)
 
 
