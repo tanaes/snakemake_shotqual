@@ -125,7 +125,7 @@ rule humann2:
                run = RUN),
         expand(# filtered fastqs
                "data/{sample}/{run}/humann2/{sample}_genefamilies.{norm}.biom",
-               norm = SAMPLES_PE,
+               norm = NORMS,
                sample = SAMPLES_PE,
                run = RUN,
                end = "R1 R2 U1 U2".split())
