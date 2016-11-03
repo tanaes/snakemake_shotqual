@@ -583,12 +583,12 @@ rule humann2_renorm_tables:
 
 rule humann2_combine_tables:
     input:
-        expand("data/{sample}/{run}/humann2/{sample}_genefamilies.{norm}.biom",
-               sample=SAMPLES_PE, run=RUN),
-        expand("data/{sample}/{run}/humann2/{sample}_pathcoverage.{norm}.biom",
-               sample=SAMPLES_PE, run=RUN),
-        expand("data/{sample}/{run}/humann2/{sample}_pathabundance.{norm}.biom",
-               sample=SAMPLES_PE, run=RUN)
+        lambda wildcards: expand("data/{sample}/{run}/humann2/{sample}_genefamilies.{norm}.biom",
+               sample=SAMPLES_PE, run=RUN, norm=wildcards.norm),
+        lambda wildcards: expand("data/{sample}/{run}/humann2/{sample}_pathcoverage.{norm}.biom",
+               sample=SAMPLES_PE, run=RUN, norm=wildcards.norm),
+        lambda wildcards: expand("data/{sample}/{run}/humann2/{sample}_pathabundance.{norm}.biom",
+               sample=SAMPLES_PE, run=RUN, norm=wildcards.norm)
     output:
         genefamilies = "data/combined_analysis/{run}/humann2/combined_genefamilies.{norm}.biom",
         pathcoverage = "data/combined_analysis/{run}/humann2/combined_pathcoverage.{norm}.biom",
