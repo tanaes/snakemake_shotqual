@@ -574,6 +574,8 @@ rule humann2_renorm_tables:
         "benchmarks/{run}/analysis/humann2_renorm_tables_{sample}.json"
     run:
         shell("""
+              set +u; {HUMANN2_ENV}; set -u
+
               humann2_renorm_table --input {input.genefamilies} \
               --output {output.genefamilies} \
               --units {wildcards.norm}
@@ -582,15 +584,19 @@ rule humann2_renorm_tables:
 rule humann2_combine_tables:
     input:
         expand("data/{sample}/{run}/humann2/{sample}_genefamilies.{norm}.biom",
-               sample=SAMPLES_PE, run=RUN, norm=NORMS),
+               sample=SAMPLES_PE, run=RUN),
         expand("data/{sample}/{run}/humann2/{sample}_pathcoverage.{norm}.biom",
-               sample=SAMPLES_PE, run=RUN, norm=NORMS),
+               sample=SAMPLES_PE, run=RUN),
         expand("data/{sample}/{run}/humann2/{sample}_pathabundance.{norm}.biom",
-               sample=SAMPLES_PE, run=RUN, norm=NORMS)
+               sample=SAMPLES_PE, run=RUN)
     output:
         genefamilies = "data/combined_analysis/{run}/humann2/combined_genefamilies.{norm}.biom",
         pathcoverage = "data/combined_analysis/{run}/humann2/combined_pathcoverage.{norm}.biom",
         pathabundance = "data/combined_analysis/{run}/humann2/combined_pathabundance.{norm}.biom"
+    log:
+        "logs/{run}/analysis/humann2_combine_tables_{norm}.log"
+    benchmark:
+        "benchmarks/{run}/humann2_combine_tables_{norm}.log"
     run:
         with tempfile.TemporaryDirectory(dir='data/combined_analysis') as temp_dir:
             for file in input:
