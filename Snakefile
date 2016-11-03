@@ -549,7 +549,8 @@ rule humann2_sample_pe:
                   --taxonomic-profile {input.metaphlan_in} \
                   --metaphlan {METAPHLAN_DIR} \
                   --o-log {log} \
-                  --threads {threads}
+                  --threads {threads} \
+                  --output-format biom
 
 
                   scp {temp_dir}/{wildcards.sample}/{wildcards.sample}_genefamilies.biom {output.genefamilies}
