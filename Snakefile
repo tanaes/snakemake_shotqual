@@ -119,16 +119,19 @@ rule humann2:
     Rule to do Humann2
     """
     input:
-        expand(# filtered fastqs
-               "data/combined_analysis/{run}/humann2/stratified/combined_genefamilies.{norm}_stratified.biom",
+        expand(# stratified
+               "data/combined_analysis/{run}/humann2/stratified/combined_pathabundance.{norm}.unstratified.biom",
+               norm = NORMS,
+               run = RUN),
+        expand(# stratified
+               "data/combined_analysis/{run}/humann2/stratified/combined_pathabundance.{norm}.unmapped.unstratified.biom",
                norm = NORMS,
                run = RUN),
         expand(# filtered fastqs
                "data/{sample}/{run}/humann2/{sample}_genefamilies.{norm}.biom",
                norm = NORMS,
                sample = SAMPLES_PE,
-               run = RUN,
-               end = "R1 R2 U1 U2".split())
+               run = RUN)
 
 
 rule raw_fastqc:
@@ -590,6 +593,7 @@ rule humann2_renorm_tables:
               --units {wildcards.norm}
               """)
 
+
 rule humann2_combine_tables:
     input:
         lambda wildcards: expand("data/{sample}/{run}/humann2/{sample}_genefamilies.{norm}.biom",
@@ -624,20 +628,54 @@ rule humann2_combine_tables:
                   humann2_join_tables --input {temp_dir} \
                   --output {output.pathabundance} \
                   --file_name pathabundance
+
                   """)
 
-rule humann2_split_stratified_tables:
+rule humann2_remove_unmapped:
     input:
         genefamilies = "data/combined_analysis/{run}/humann2/combined_genefamilies.{norm}.biom",
         pathcoverage = "data/combined_analysis/{run}/humann2/combined_pathcoverage.{norm}.biom",
         pathabundance = "data/combined_analysis/{run}/humann2/combined_pathabundance.{norm}.biom"
     output:
-        genefamilies = "data/combined_analysis/{run}/humann2/stratified/combined_genefamilies.{norm}_stratified.biom",
-        pathcoverage = "data/combined_analysis/{run}/humann2/stratified/combined_pathcoverage.{norm}_stratified.biom",
-        pathabundance = "data/combined_analysis/{run}/humann2/stratified/combined_pathabundance.{norm}_stratified.biom",
-        genefamilies_unstrat = "data/combined_analysis/{run}/humann2/stratified/combined_genefamilies.{norm}_unstratified.biom",
-        pathcoverage_unstrat = "data/combined_analysis/{run}/humann2/stratified/combined_pathcoverage.{norm}_unstratified.biom",
-        pathabundance_unstrat = "data/combined_analysis/{run}/humann2/stratified/combined_pathabundance.{norm}_unstratified.biom"
+        genefamilies = "data/combined_analysis/{run}/humann2/combined_genefamilies.{norm}.mapped.biom",
+        pathcoverage = "data/combined_analysis/{run}/humann2/combined_pathcoverage.{norm}.mapped.biom",
+        pathabundance = "data/combined_analysis/{run}/humann2/combined_pathabundance.{norm}.mapped.biom"
+    threads:
+        1
+    log:
+        "logs/{run}/analysis/humann2_remove_un_{sample}.log"
+    benchmark:
+        "benchmarks/{run}/analysis/humann2_remove_un_{sample}.json"
+    run:
+        shell("""
+              set +u; {HUMANN2_ENV}; set -u
+
+              humann2_renorm_table --input {input.genefamilies} \
+              --output {output.genefamilies} \
+              --units {wildcards.norm} -s n
+
+              humann2_renorm_table --input {input.pathcoverage} \
+              --output {output.pathcoverage} \
+              --units {wildcards.norm} -s n
+
+              humann2_renorm_table --input {input.pathabundance} \
+              --output {output.pathabundance} \
+              --units {wildcards.norm} -s n
+              """)
+
+
+rule humann2_split_stratified_tables:
+    input:
+        genefamilies = "data/combined_analysis/{run}/humann2/combined_genefamilies.{norm}{mapped}.biom",
+        pathcoverage = "data/combined_analysis/{run}/humann2/combined_pathcoverage.{norm}{mapped}.biom",
+        pathabundance = "data/combined_analysis/{run}/humann2/combined_pathabundance.{norm}{mapped}.biom"
+    output:
+        genefamilies = "data/combined_analysis/{run}/humann2/stratified/combined_genefamilies.{norm}{mapped}.stratified.biom",
+        pathcoverage = "data/combined_analysis/{run}/humann2/stratified/combined_pathcoverage.{norm}{mapped}.stratified.biom",
+        pathabundance = "data/combined_analysis/{run}/humann2/stratified/combined_pathabundance.{norm}{mapped}.stratified.biom",
+        genefamilies_unstrat = "data/combined_analysis/{run}/humann2/stratified/combined_genefamilies.{norm}{mapped}.unstratified.biom",
+        pathcoverage_unstrat = "data/combined_analysis/{run}/humann2/stratified/combined_pathcoverage.{norm}{mapped}.unstratified.biom",
+        pathabundance_unstrat = "data/combined_analysis/{run}/humann2/stratified/combined_pathabundance.{norm}{mapped}.unstratified.biom"
     run:
         shell("""
               set +u; {HUMANN2_ENV}; set -u
