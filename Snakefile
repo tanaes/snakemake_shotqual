@@ -481,7 +481,7 @@ rule metaphlan2_sample_pe:
                     --nproc {threads} \
                     --tmp_dir {temp_dir} \
                     --no_map \
-                    --input_type fastq > {output}
+                    --input_type fastq > {output}  2> {log}
                   """)
 
 
@@ -509,9 +509,9 @@ rule combine_metaphlan:
             shell("""
                   set +u; {HUMANN2_ENV}; set -u
 
-                  humann2_join_tables --input {temp_dir} --output {output.joint_prof}
+                  humann2_join_tables --input {temp_dir} --output {output.joint_prof} 2> {log} 1>&2
                   humann2_reduce_table --input {output.joint_prof} \
-                  --output {output.max_prof} --function max --sort-by level
+                  --output {output.max_prof} --function max --sort-by level 2>> {log} 1>&2
                   """)
 
 
@@ -552,7 +552,7 @@ rule humann2_sample_pe:
                   --metaphlan {METAPHLAN_DIR} \
                   --o-log {log} \
                   --threads {threads} \
-                  --output-format biom
+                  --output-format biom 2> {log} 1>&2
 
 
                   scp {temp_dir}/{wildcards.sample}/{wildcards.sample}_genefamilies.biom {output.genefamilies}
@@ -581,15 +581,15 @@ rule humann2_renorm_tables:
 
               humann2_renorm_table --input {input.genefamilies} \
               --output {output.genefamilies} \
-              --units {wildcards.norm}
+              --units {wildcards.norm} 2> {log} 1>&2
 
               humann2_renorm_table --input {input.pathcoverage} \
               --output {output.pathcoverage} \
-              --units {wildcards.norm}
+              --units {wildcards.norm} 2>> {log} 1>&2
 
               humann2_renorm_table --input {input.pathabundance} \
               --output {output.pathabundance} \
-              --units {wildcards.norm}
+              --units {wildcards.norm} 2>> {log} 1>&2
               """)
 
 
@@ -618,15 +618,15 @@ rule humann2_combine_tables:
 
                   humann2_join_tables --input {temp_dir} \
                   --output {output.genefamilies} \
-                  --file_name genefamilies
+                  --file_name genefamilies 2> {log} 1>&2
 
                   humann2_join_tables --input {temp_dir} \
                   --output {output.pathcoverage} \
-                  --file_name pathcoverage
+                  --file_name pathcoverage 2>> {log} 1>&2
 
                   humann2_join_tables --input {temp_dir} \
                   --output {output.pathabundance} \
-                  --file_name pathabundance
+                  --file_name pathabundance 2>> {log} 1>&2
 
                   """)
 
@@ -651,15 +651,15 @@ rule humann2_remove_unmapped:
 
               humann2_renorm_table --input {input.genefamilies} \
               --output {output.genefamilies} \
-              --units {wildcards.norm} -s n
+              --units {wildcards.norm} -s n 2> {log} 1>&2
 
               humann2_renorm_table --input {input.pathcoverage} \
               --output {output.pathcoverage} \
-              --units {wildcards.norm} -s n
+              --units {wildcards.norm} -s n 2>> {log} 1>&2
 
               humann2_renorm_table --input {input.pathabundance} \
               --output {output.pathabundance} \
-              --units {wildcards.norm} -s n
+              --units {wildcards.norm} -s n 2>> {log} 1>&2
               """)
 
 
@@ -680,13 +680,13 @@ rule humann2_split_stratified_tables:
               set +u; {HUMANN2_ENV}; set -u
 
               humann2_split_stratified_table --input {input.genefamilies} \
-              --output data/combined_analysis/{wildcards.run}/humann2/stratified
+              --output data/combined_analysis/{wildcards.run}/humann2/stratified 2> {log} 1>&2
 
               humann2_split_stratified_table --input {input.pathcoverage} \
-              --output data/combined_analysis/{wildcards.run}/humann2/stratified
+              --output data/combined_analysis/{wildcards.run}/humann2/stratified 2>> {log} 1>&2
 
               humann2_split_stratified_table --input {input.pathabundance} \
-              --output data/combined_analysis/{wildcards.run}/humann2/stratified
+              --output data/combined_analysis/{wildcards.run}/humann2/stratified 2>> {log} 1>&2
               """)
 
 
