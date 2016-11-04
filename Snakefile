@@ -15,7 +15,8 @@ gzip        = config["SOFTWARE"]["gzip"]
 
 # These rules are not processor intensive, and will execute on the head node
 # without being allocated to compute nodes
-localrules: raw_make_links_pe, raw_make_links_se, multiQC_run, multiQC_all
+localrules: raw_make_links_pe, raw_make_links_se, multiQC_run, multiQC_all,
+            humann2_renorm_tables, humann2_remove_unmapped
 
 # This specifices the environment setup command for running compute jobs
 # (for example, source activate kneaddata) and is specified in config.yaml
