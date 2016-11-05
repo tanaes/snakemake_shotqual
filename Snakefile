@@ -462,7 +462,7 @@ rule metaphlan2_sample_pe:
     output:
         "data/{sample}/{run}/metaphlan2/{sample}_metaphlan_output.tsv"
     threads:
-        8
+        4
     log:
         "logs/{run}/analysis/metaphlan2_sample_pe_{sample}.log"
     benchmark:
@@ -675,6 +675,12 @@ rule humann2_split_stratified_tables:
         genefamilies_unstrat = "data/combined_analysis/{run}/humann2/stratified/combined_genefamilies_{norm}_{mapped}_unstratified.biom",
         pathcoverage_unstrat = "data/combined_analysis/{run}/humann2/stratified/combined_pathcoverage_{norm}_{mapped}_unstratified.biom",
         pathabundance_unstrat = "data/combined_analysis/{run}/humann2/stratified/combined_pathabundance_{norm}_{mapped}_unstratified.biom"
+    threads:
+        1
+    log:
+        "logs/{run}/analysis/humann2_split_stratified_tables.log"
+    benchmark:
+        "benchmarks/{run}/analysis/humann2_split_stratified_tables.json"
     run:
         shell("""
               set +u; {HUMANN2_ENV}; set -u
