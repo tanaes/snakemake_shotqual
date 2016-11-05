@@ -255,7 +255,7 @@ rule qc_trimmomatic_pe:
     log:
         "logs/{run}/qc/trimmomatic_pe_{sample}.log" 
     threads:
-        8
+        6
     run:
         with tempfile.TemporaryDirectory(dir=TMP_DIR_ROOT) as temp_dir:
             shell("""
@@ -418,7 +418,7 @@ rule host_filter_pe:
         unpaired_1_fn = "{sample}_U1.trimmed.host_filtered.fq.gz",
         unpaired_2_fn = "{sample}_U2.trimmed.host_filtered.fq.gz"
     threads:
-        16
+        12
     benchmark:
         "benchmarks/{run}/qc/host_filter_pe_{sample}.json"
     log:
