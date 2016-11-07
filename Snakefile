@@ -103,12 +103,12 @@ rule all:
                 end = "R1 R2 U1 U2".split()),
         expand( # HUMANn2 on each sample
                "data/{sample}/{run}/humann2/{sample}_genefamilies_{norm}.biom",
-               norm = NORMS,
+               norm = config['PARAMS']['HUMANN2']['NORMS'],
                sample = SAMPLES_PE,
                run = RUN),
         expand( # Summarized HUMANn2 results
                "data/combined_analysis/{run}/humann2/stratified/combined_pathabundance_{norm}_{mapped}_unstratified.biom",
-               norm = NORMS,
+               norm = config['PARAMS']['HUMANN2']['NORMS'],
                run = RUN,
                mapped=['all','mapped']),
         expand( # MultiQC for just this run
@@ -139,17 +139,17 @@ rule humann2:
         - humann2_remove_unmapped
         - humann2_split_stratified_tables
     """
-    params:
-        norms = config['PARAMS']['HUMANN2']['NORMS']
+    # params:
+    #     norms = config['PARAMS']['HUMANN2']['NORMS']
     input:
         expand(# filtered fastqs
                "data/{sample}/{run}/humann2/{sample}_genefamilies_{norm}.biom",
-               norm = NORMS,
+               norm = config['PARAMS']['HUMANN2']['NORMS'],
                sample = SAMPLES_PE,
                run = RUN),
         expand(# stratified
                "data/combined_analysis/{run}/humann2/stratified/combined_pathabundance_{norm}_{mapped}_unstratified.biom",
-               norm = NORMS,
+               norm = config['PARAMS']['HUMANN2']['NORMS'],
                run = RUN,
                mapped=['all','mapped'])
 
@@ -473,7 +473,7 @@ rule host_filter_pe:
         forward_fn = "{sample}_R1.trimmed.host_filtered.fq",
         reverse_fn = "{sample}_R2.trimmed.host_filtered.fq",
         unpaired_1_fn = "{sample}_U1.trimmed.host_filtered.fq.gz",
-        unpaired_2_fn = "{sample}_U2.trimmed.host_filtered.fq.gz"
+        unpaired_2_fn = "{sample}_U2.trimmed.host_filtered.fq.gz",
         host_db = config["HOST_DB"]
     threads:
         12
@@ -596,11 +596,10 @@ rule humann2_sample_pe:
         pathcoverage = "data/{sample}/{run}/humann2/{sample}_pathcoverage.biom",
         pathabundance = "data/{sample}/{run}/humann2/{sample}_pathabundance.biom"
     params:
-        metaphlan_dir = config['PARAMS']['HUMANN2']["METAPHLAN_DIR"]
-        humann2_nt_db = config['PARAMS']['HUMANN2']["HUMANN2_NT_DB"]
-        humann2_aa_db = config['PARAMS']['HUMANN2']["HUMANN2_AA_DB"]
-        if "OTHER" in config['PARAMS']['HUMANN2']:
-            other = config['PARAMS']['HUMANN2']['OTHER']
+        metaphlan_dir = config['PARAMS']['HUMANN2']["METAPHLAN_DIR"],
+        humann2_nt_db = config['PARAMS']['HUMANN2']["HUMANN2_NT_DB"],
+        humann2_aa_db = config['PARAMS']['HUMANN2']["HUMANN2_AA_DB"],
+        # other = config['PARAMS']['HUMANN2']['OTHER'] if 'OTHER' in  config['PARAMS']['HUMANN2']
     threads:
         8
     log:
