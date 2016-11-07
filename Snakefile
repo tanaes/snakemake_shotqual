@@ -616,7 +616,7 @@ rule humann2_sample_pe:
                   humann2 --input {temp_dir}/input.fastq \
                   --output {temp_dir}/{wildcards.sample} \
                   --output-basename {wildcards.sample} \
-                  --nucleotide-database {parms.humann2_nt_db} \
+                  --nucleotide-database {params.humann2_nt_db} \
                   --protein-database {params.humann2_aa_db} \
                   --taxonomic-profile {input.metaphlan_in} \
                   --metaphlan {params.metaphlan_dir} \
