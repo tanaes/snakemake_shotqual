@@ -1,6 +1,6 @@
 TMP_DIR_ROOT: /localscratch
 RUN: Run1
-HOST_DB: /home/jgsanders/ref_data/genomes/Homo_sapiens_Bowtie2_v0.1/Homo_sapiens
+HOST_DB: /home/jgsanders/ref_data/genomes/mouse/mouse
 ENVS:
   BOWTIE_ENV: source activate kneaddata
   HUMANN2_ENV: source activate kneaddata
