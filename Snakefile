@@ -117,6 +117,68 @@ rule all:
         ),
         "data/multiQC/all/multiqc_report.html"
 
+rule basic_qc:
+    """
+    Rule to do basic qc, including host-filtering.
+
+    All the Quality Control:
+        - raw_fastqc
+        - qc_trimmomatic_pe
+        - qc_trimmomatic_se
+        - qc_interleave_pe_pe
+        - qc_fastqc
+    And Host Filtering:
+        - host_filter_pe
+    """
+    input:
+        expand( # fastqc zip and html for raw PE data
+            "data/{sample}/{run}/fastqc_raw/{sample}_{end}_fastqc.{extension}",
+            sample = SAMPLES_PE,
+            run = RUN,
+            end = "R1 R2".split(),
+            extension = "zip html".split()
+        ) + expand( # fastqc zip and html for raw SE data
+            "data/{sample}/{run}/fastqc_raw/{sample}_{end}_fastqc.{extension}",
+            sample = SAMPLES_SE,
+            run = RUN,
+            end = "SE".split(),
+            extension = "zip html".split()
+        ),
+        expand( # trimmomatic output for PE data
+            "data/{sample}/{run}/trimmed/{sample}_{end}.trimmed.fq.gz",
+            sample = SAMPLES_PE,
+            run = RUN,
+            end = "R1 R2 U1 U2".split()
+        ) + expand( # fastqc zip and html for raw SE data
+            "data/{sample}/{run}/trimmed/{sample}_{end}.trimmed.fq.gz",
+            sample = SAMPLES_SE,
+            run = RUN,
+            end = "SE".split()
+        ),
+        expand( # fastqc zipa nd html for trimmed PE data
+            "data/{sample}/{run}/fastqc_trimmed/{sample}_{end}.trimmed_fastqc.{extension}",
+            sample = SAMPLES_PE,
+            end = "R1 R2".split(),
+            run = RUN,
+            extension = "zip html".split()
+        ) + expand( # fastqc zipa nd html for trimmed SE data
+            "data/{sample}/{run}/fastqc_trimmed/{sample}_{end}.trimmed_fastqc.{extension}",
+            sample = SAMPLES_SE,
+            end = "SE".split(),
+            run = RUN,
+            extension = "zip html".split()
+        ),
+        expand( # host-filtered fastqs
+                "data/{sample}/{run}/host_filtered/{sample}_{end}.trimmed.host_filtered.fq.gz",
+                sample = SAMPLES_PE,
+                run = RUN,
+                end = "R1 R2 U1 U2".split()),
+        expand( # MultiQC for just this run
+            "data/multiQC/{run}/multiqc_report.html",
+            run = RUN
+        ),
+        "data/multiQC/all/multiqc_report.html"
+
 rule host_filter:
     """
     Rule to do host-filtering
