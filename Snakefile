@@ -599,7 +599,7 @@ rule humann2_sample_pe:
         metaphlan_dir = config['PARAMS']['HUMANN2']["METAPHLAN_DIR"],
         humann2_nt_db = config['PARAMS']['HUMANN2']["HUMANN2_NT_DB"],
         humann2_aa_db = config['PARAMS']['HUMANN2']["HUMANN2_AA_DB"],
-        # other = config['PARAMS']['HUMANN2']['OTHER'] if 'OTHER' in  config['PARAMS']['HUMANN2']
+        other = config['PARAMS']['HUMANN2']['OTHER']
     threads:
         8
     log:
