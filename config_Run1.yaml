@@ -2,9 +2,10 @@ TMP_DIR_ROOT: /localscratch
 RUN: Run1
 HOST_DB: /projects/mammal_glycans/haddad_mice/dbs/mouse/mouse
 ENVS:
-  BOTWIE_ENV: source activate kneaddata
+  BOWTIE_ENV: source activate kneaddata
   HUMANN2_ENV: source activate kneaddata
   KNEAD_ENV: source activate kneaddata
+  METAPHLAN_ENV: source activate kneaddata
   QC_ENV: source activate kneaddata
   TRIM_ENV: source activate kneaddata
 SOFTWARE:
