@@ -616,7 +616,6 @@ rule host_filter_se:
                   set +u; {BOWTIE_ENV}; set -u
 
                   bowtie2 -p {threads} -x {params.host_db} --very-sensitive -U {input.single} --un-gz {temp_dir}/{params.single} -S /dev/null 2> {log.other}
-                  scp {temp_dir}/{params.unpaired_1_fn} {output.unpaired_1}
                   scp {temp_dir}/{params.single} {output.single}
                   """)
 
