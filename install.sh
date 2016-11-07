@@ -8,7 +8,7 @@ source activate kneaddata
 
 conda install -c bioconda --yes bowtie2 fastqc trimmomatic
 
-pip install snakemake multiqc humann2 kneaddata
+pip install snakemake multiqc kneaddata
 
 # download the kneaddata human genome database
 mkdir -p ~/share/kd_dbs
