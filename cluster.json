@@ -6,13 +6,13 @@
     },
     "metaphlan2_sample_pe": {
         "time": "8:00:00",
-        "n": 8,
+        "n": 4,
         "mem": 32
     },
     "humann2_sample_pe": {
         "time": "8:00:00",
         "n": 8,
-        "mem": 64
+        "mem": 32
     },
     "host_filter_pe": {
         "time": "8:00:00",

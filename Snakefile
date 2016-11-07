@@ -31,18 +31,12 @@ if "HUMANN2_ENV" in config["ENVS"]:
 if "METAPHLAN_ENV" in config["ENVS"]:
     METAPHLAN_ENV = config["ENVS"]["METAPHLAN_ENV"]
 
-# DB info
-if "HOST_DB" in config:
-    HOST_DB = config["HOST_DB"]
+# Host DB specified in config file accessed in params section of rule
 
-# Trimmomatic params
+# Trimmomatic parameters accessed in params section of rule
 
-# HUMAnN2 params
-if "HUMANN2" in config['PARAMS']:
-    NORMS = config['PARAMS']['HUMANN2']['NORMS']
-    METAPHLAN_DIR = config['PARAMS']['HUMANN2']["METAPHLAN_DIR"]
-    HUMANN2_NT_DB = config['PARAMS']['HUMANN2']["HUMANN2_NT_DB"]
-    HUMANN2_AA_DB = config['PARAMS']['HUMANN2']["HUMANN2_AA_DB"]
+# HUMAnN2 parameters accessed in params section of rule
+
 
 #### Top-level rules: rules to execute a subset of the pipeline
 
@@ -54,6 +48,15 @@ rule all:
         - qc_trimmomatic_se
         - qc_interleave_pe_pe
         - qc_fastqc
+    And Host Filtering:
+        - host_filter_pe
+    And HUMANn2:
+        - metaphlan2_sample_pe
+        - combine_metaphlan
+        - humann2_sample_pe
+        - humann2_combine_tables
+        - humann2_remove_unmapped
+        - humann2_split_stratified_tables
     """
     input:
         expand( # fastqc zip and html for raw PE data
@@ -80,20 +83,35 @@ rule all:
             run = RUN,
             end = "SE".split()
         ),
-        expand(
+        expand( # fastqc zipa nd html for trimmed PE data
             "data/{sample}/{run}/fastqc_trimmed/{sample}_{end}.trimmed_fastqc.{extension}",
             sample = SAMPLES_PE,
             end = "R1 R2".split(),
             run = RUN,
             extension = "zip html".split()
-        ) + expand(
+        ) + expand( # fastqc zipa nd html for trimmed SE data
             "data/{sample}/{run}/fastqc_trimmed/{sample}_{end}.trimmed_fastqc.{extension}",
             sample = SAMPLES_SE,
             end = "SE".split(),
             run = RUN,
             extension = "zip html".split()
         ),
-        expand(
+        expand( # host-filtered fastqs
+                "data/{sample}/{run}/host_filtered/{sample}_{end}.trimmed.host_filtered.fq.gz",
+                sample = SAMPLES_PE,
+                run = RUN,
+                end = "R1 R2 U1 U2".split()),
+        expand( # HUMANn2 on each sample
+               "data/{sample}/{run}/humann2/{sample}_genefamilies_{norm}.biom",
+               norm = NORMS,
+               sample = SAMPLES_PE,
+               run = RUN),
+        expand( # Summarized HUMANn2 results
+               "data/combined_analysis/{run}/humann2/stratified/combined_pathabundance_{norm}_{mapped}_unstratified.biom",
+               norm = NORMS,
+               run = RUN,
+               mapped=['all','mapped']),
+        expand( # MultiQC for just this run
             "data/multiQC/{run}/multiqc_report.html",
             run = RUN
         ),
@@ -101,12 +119,8 @@ rule all:
 
 rule host_filter:
     """
-    Rule to do all the Quality Control:
-        - raw_fastqc
-        - qc_trimmomatic_pe
-        - qc_trimmomatic_se
-        - qc_interleave_pe_pe
-        - qc_fastqc
+    Rule to do host-filtering
+        - host_filter_pe
     """
     input:
         expand( # filtered fastqs
@@ -118,7 +132,15 @@ rule host_filter:
 rule humann2:
     """
     Rule to do Humann2
+        - metaphlan2_sample_pe
+        - combine_metaphlan
+        - humann2_sample_pe
+        - humann2_combine_tables
+        - humann2_remove_unmapped
+        - humann2_split_stratified_tables
     """
+    params:
+        norms = config['PARAMS']['HUMANN2']['NORMS']
     input:
         expand(# filtered fastqs
                "data/{sample}/{run}/humann2/{sample}_genefamilies_{norm}.biom",
@@ -155,6 +177,9 @@ rule raw_fastqc:
 
 
 rule raw_make_links_pe:
+    """
+    Makes symlinks from raw sequences files to the analysis directory.
+    """
     input:
         forward = lambda wildcards: config["samples_pe"][wildcards.sample]["forward"],
         reverse = lambda wildcards: config["samples_pe"][wildcards.sample]["reverse"]
@@ -175,6 +200,9 @@ rule raw_make_links_pe:
 
 
 rule raw_make_links_se:
+    """
+    Makes symlinks from raw sequences files to the analysis directory.
+    """
     input:
         single = lambda wildcards: config["samples_se"][wildcards.sample]["forward"],
     output:
@@ -192,6 +220,10 @@ rule raw_make_links_se:
 
 
 rule raw_fastqc_sample:
+    """
+    Do FASTQC reports for raw fastq sequence files. 
+    One thread per fastq.gz file.
+    """
     input:
         fastq = "data/{sample}/{run}/raw/{sample}_{end}.fq.gz"
     output:
@@ -214,23 +246,41 @@ rule raw_fastqc_sample:
         """
 
 
+rule qc_fastqc:
+    """
+    Do FASTQC reports for Trimmomatic-trimmed files. 
+    One thread per fastq.gz file.
+    """
+    input:
+        fastq = "data/{sample}/{run}/trimmed/{sample}_{end}.trimmed.fq.gz"
+    output:
+        html = "data/{sample}/{run}/fastqc_trimmed/{sample}_{end}.trimmed_fastqc.html",
+        zip =  "data/{sample}/{run}/fastqc_trimmed/{sample}_{end}.trimmed_fastqc.zip"
+    threads:
+        1
+    log:
+        "logs/{run}/qc/fastqc_trimmed_{sample}_{end}.log"
+    benchmark:
+        "benchmarks/{run}/qc/fastqc_trimmed_{sample}_{end}.json"
+    shell:
+        """
+        set +u; {QC_ENV}; set -u
+        fastqc \
+            --outdir data/{wildcards.sample}/{wildcards.run}/fastqc_trimmed {input.fastq} 2> {log} 1>&2
+        """
+
+
 rule qc_trimmomatic_pe:
     """
     Run trimmomatic on paired end mode to eliminate Illumina adaptors and 
     remove low quality regions and reads.
-    Inputs _1 and _2 are piped through gzip/pigz.
-    Outputs _1 and _2 are piped to gzip/pigz (level 9).
-    Outputs _3 and _4 are compressed with the builtin compressor from 
-    Trimmomatic. Further on they are catted and compressed with gzip/pigz 
-    (level 9).
-    Note: The cut -f 1 -d " " is to remove additional fields in the FASTQ
-    header. It is done posterior to the trimming since the output comes 
-    slower than the input is read.
-    Number of threads used:
-        4 for trimmomatic
-        2 for gzip inputs
-        2 for gzip outputs
-        Total: 8
+    
+    Retains unpaired forward and reverse reads. 
+
+    To avoid breaking, touches output file names in case there don't end up
+    being any outputs in a particular category (sometimes happens with very
+    shallowly sequenced samples). In this case, these filenames will exist but
+    be empty.
     """
     input:
         forward = "data/{sample}/{run}/raw/{sample}_R1.fq.gz",
@@ -260,39 +310,37 @@ rule qc_trimmomatic_pe:
         with tempfile.TemporaryDirectory(dir=TMP_DIR_ROOT) as temp_dir:
             shell("""
                   set +u; {TRIM_ENV}; set -u
+
                   {trimmomatic} PE \
                     -threads {threads} \
                     -{params.phred} \
                     {input.forward} \
                     {input.reverse} \
-                    %s/{params.forward} \
-                    %s/{params.unpaired_1} \
-                    %s/{params.reverse} \
-                    %s/{params.unpaired_2} \
+                    {temp_dir}/{params.forward} \
+                    {temp_dir}/{params.unpaired_1} \
+                    {temp_dir}/{params.reverse} \
+                    {temp_dir}/{params.unpaired_2} \
                     ILLUMINACLIP:{params.adaptor}:{params.trimmomatic_clip} \
                     {params.trimmomatic_params} \
                   2> {log}
-                  
-                  scp %s/{params.forward} {output.forward}
-                  scp %s/{params.reverse} {output.reverse}
-                  scp %s/{params.unpaired_1} {output.unpaired_1}
-                  scp %s/{params.unpaired_2} {output.unpaired_2}
-                  """ % (temp_dir, temp_dir, temp_dir, temp_dir,
-                         temp_dir, temp_dir, temp_dir, temp_dir
-                         ))
+
+                  touch {temp_dir}/{params.forward}
+                  touch {temp_dir}/{params.unpaired_1}
+                  touch {temp_dir}/{params.reverse}
+                  touch {temp_dir}/{params.unpaired_2}
+
+                  scp {temp_dir}/{params.forward} {output.forward}
+                  scp {temp_dir}/{params.reverse} {output.reverse}
+                  scp {temp_dir}/{params.unpaired_1} {output.unpaired_1}
+                  scp {temp_dir}/{params.unpaired_2} {output.unpaired_2}
+                  """)
 
 
 
 rule qc_trimmomatic_se:
     """
     Run trimmomatic on single end mode to eliminate Illumina adaptors and 
-        remove low quality regions and reads.
-    Input is piped through gzip/pigz.
-    Output is piped to gzip.
-    Threads used:
-        4 for trimmomatic
-        1 for gzip input
-        1 for gzip output
+    remove low quality regions and reads.
     """
     input:
         single = "data/{sample}/{run}/raw/{sample}_SE.fq.gz"
@@ -314,44 +362,29 @@ rule qc_trimmomatic_se:
         with tempfile.TemporaryDirectory(dir=TMP_DIR_ROOT) as temp_dir:
             shell("""
                   set +u; {TRIM_ENV}; set -u
+
                   {trimmomatic} SE \
                       -threads {threads} \
                       -{params.phred} \
                       {input.single} \
-                      %s/{params.single} \
+                      {temp_dir}/{params.single} \
                     ILLUMINACLIP:{params.adaptor}:{params.trimmomatic_clip} \
                     {params.trimmomatic_params} \
                   2> {log}
 
-                  scp %s/{params.single} {output.single} 
-                  """ % (temp_dir, temp_dir))
-
-
-rule qc_fastqc:
-    """
-    Do FASTQC reports
-    One thread per fastq.gz file
-    """
-    input:
-        fastq = "data/{sample}/{run}/trimmed/{sample}_{end}.trimmed.fq.gz"
-    output:
-        html = "data/{sample}/{run}/fastqc_trimmed/{sample}_{end}.trimmed_fastqc.html",
-        zip =  "data/{sample}/{run}/fastqc_trimmed/{sample}_{end}.trimmed_fastqc.zip"
-    threads:
-        1
-    log:
-        "logs/{run}/qc/fastqc_trimmed_{sample}_{end}.log"
-    benchmark:
-        "benchmarks/{run}/qc/fastqc_trimmed_{sample}_{end}.json"
-    shell:
-        """
-        set +u; {QC_ENV}; set -u
-        fastqc \
-            --outdir data/{wildcards.sample}/{wildcards.run}/fastqc_trimmed {input.fastq} 2> {log} 1>&2
-        """
+                  scp {temp_dir}/{params.single} {output.single} 
+                  """)
 
 
 rule multiQC_run:
+    """
+    Perform MultiQC summary on set of fastqc and logged output for the current
+    analyzed run. 
+
+    Will pass an explicit list of FastQC file outputs, in addition to the log
+    directory. MultiQC will scan the log files and detect Trimmomatic and Bowtie
+    outputs. 
+    """
     input: 
         expand("data/{sample}/{run}/fastqc_trimmed/{sample}_{end}.trimmed_fastqc.html", sample=SAMPLES_PE, run=RUN, end="R1 R2".split()),
         expand("data/{sample}/{run}/fastqc_trimmed/{sample}_{end}.trimmed_fastqc.zip", sample=SAMPLES_PE, run=RUN, end="R1 R2".split()),
@@ -377,6 +410,14 @@ rule multiQC_run:
 
 
 rule multiQC_all:
+    """
+    Perform MultiQC summary on set of fastqc and logged output for all runs
+    in current project. 
+
+    Passes the entire data directory, in addition to the log directory. MultiQC
+    will scan the log files and detect Trimmomatic and Bowtie outputs, plus
+    the FastQC outputs in the data directory. 
+    """
     input:
         expand("data/{sample}/{run}/fastqc_trimmed/{sample}_{end}.trimmed_fastqc.html", sample=SAMPLES_PE, run=RUN, end="R1 R2".split()),
         expand("data/{sample}/{run}/fastqc_trimmed/{sample}_{end}.trimmed_fastqc.zip", sample=SAMPLES_PE, run=RUN, end="R1 R2".split()),
@@ -402,6 +443,22 @@ rule multiQC_all:
 
 
 rule host_filter_pe:
+    """
+    Performs host read filtering on paired end data using Bowtie and Samtools/
+    BEDtools. Takes the four output files generated by Trimmomatic. 
+
+    Also requires an indexed reference (path specified in config). 
+
+    First, uses Bowtie output piped through Samtools to only retain read pairs
+    that are never mapped (either concordantly or just singly) to the indexed
+    reference genome. Fastqs from this are gzipped into matched forward and 
+    reverse pairs. 
+
+    Unpaired forward and reverse reads are simply run through Bowtie and
+    non-mapping gzipped reads output.
+
+    All piped output first written to localscratch to avoid tying up filesystem.
+    """
     input:
         forward  = "data/{sample}/{run}/trimmed/{sample}_R1.trimmed.fq.gz",
         reverse  = "data/{sample}/{run}/trimmed/{sample}_R2.trimmed.fq.gz",
@@ -417,6 +474,7 @@ rule host_filter_pe:
         reverse_fn = "{sample}_R2.trimmed.host_filtered.fq",
         unpaired_1_fn = "{sample}_U1.trimmed.host_filtered.fq.gz",
         unpaired_2_fn = "{sample}_U2.trimmed.host_filtered.fq.gz"
+        host_db = config["HOST_DB"]
     threads:
         12
     benchmark:
@@ -429,7 +487,7 @@ rule host_filter_pe:
             shell("""
                   set +u; {BOWTIE_ENV}; set -u
 
-                  bowtie2 -p {threads} -x {HOST_DB} --very-sensitive -1 {input.forward} -2 {input.reverse} 2> {log.bowtie}| \
+                  bowtie2 -p {threads} -x {params.host_db} --very-sensitive -1 {input.forward} -2 {input.reverse} 2> {log.bowtie}| \
                   samtools view -f 12 -F 256 2> {log.other}| \
                   samtools sort -T {temp_dir} -@ {threads} -n 2> {log.other} | \
                   samtools view -bS 2> {log.other} | \
@@ -441,8 +499,8 @@ rule host_filter_pe:
                   scp {temp_dir}/{params.forward_fn}.gz {output.forward}
                   scp {temp_dir}/{params.reverse_fn}.gz {output.reverse} 
 
-                  bowtie2 -p {threads} -x {HOST_DB} --very-sensitive -U {input.unpaired_1} --un-gz {temp_dir}/{params.unpaired_1_fn} -S /dev/null 2> {log.other}
-                  bowtie2 -p {threads} -x {HOST_DB} --very-sensitive -U {input.unpaired_2} --un-gz {temp_dir}/{params.unpaired_2_fn} -S /dev/null 2> {log.other}
+                  bowtie2 -p {threads} -x {params.host_db} --very-sensitive -U {input.unpaired_1} --un-gz {temp_dir}/{params.unpaired_1_fn} -S /dev/null 2> {log.other}
+                  bowtie2 -p {threads} -x {params.host_db} --very-sensitive -U {input.unpaired_2} --un-gz {temp_dir}/{params.unpaired_2_fn} -S /dev/null 2> {log.other}
                   scp {temp_dir}/{params.unpaired_1_fn} {output.unpaired_1}
                   scp {temp_dir}/{params.unpaired_2_fn} {output.unpaired_2}
                   """)
@@ -452,7 +510,10 @@ rule host_filter_pe:
 rule metaphlan2_sample_pe:
     """
     Runs MetaPhlan2 on a set of samples to create a joint taxonomic profile for
-    input into HUMAnN2.
+    input into HUMAnN2, based on the thinking that it is preferable to have a
+    consistent Chocophlan reference database for the whole set of samples. This
+    is especially true for shallowly sequenced samples. 
+
     Going to do just R1 reads for now. Because of how I've split PE vs SE
     processing and naming, still will need to make a separate rule for PE. 
     """
@@ -461,6 +522,8 @@ rule metaphlan2_sample_pe:
         unpaired_f = "data/{sample}/{run}/host_filtered/{sample}_U1.trimmed.host_filtered.fq.gz"
     output:
         "data/{sample}/{run}/metaphlan2/{sample}_metaphlan_output.tsv"
+    params:
+        metaphlan_dir = config['PARAMS']['HUMANN2']["METAPHLAN_DIR"]
     threads:
         4
     log:
@@ -474,10 +537,10 @@ rule metaphlan2_sample_pe:
 
                   zcat {input.paired_f} {input.unpaired_f} > {temp_dir}/input.fastq
 
-                  {METAPHLAN_DIR}/metaphlan2.py {temp_dir}/input.fastq \
+                  {params.metaphlan_dir}/metaphlan2.py {temp_dir}/input.fastq \
                     --input_type fastq \
-                    --mpa_pkl {METAPHLAN_DIR}/db_v20/mpa_v20_m200.pkl \
-                    --bowtie2db {METAPHLAN_DIR}/db_v20/mpa_v20_m200 \
+                    --mpa_pkl {params.metaphlan_dir}/db_v20/mpa_v20_m200.pkl \
+                    --bowtie2db {params.metaphlan_dir}/db_v20/mpa_v20_m200 \
                     --nproc {threads} \
                     --tmp_dir {temp_dir} \
                     --no_map \
@@ -487,9 +550,8 @@ rule metaphlan2_sample_pe:
 
 rule combine_metaphlan:
     """
-    Combines MetaPhlan2 output for unified taxonomic profile for Humann2
+    Combines MetaPhlan2 output for unified taxonomic profile for Humann2.
     """
-
     input:
         expand("data/{sample}/{run}/metaphlan2/{sample}_metaphlan_output.tsv",
                sample=SAMPLES_PE, run=RUN)
@@ -519,6 +581,9 @@ rule humann2_sample_pe:
     """
     Runs HUMAnN2 pipeline using general defaults.
 
+    Other HUMAnN2 parameters can be specified as a quoted string in 
+    PARAMS: HUMANN2: OTHER. 
+
     Going to do just R1 reads for now. Because of how I've split PE vs SE
     processing and naming, still will need to make a separate rule for PE. 
     """
@@ -530,6 +595,12 @@ rule humann2_sample_pe:
         genefamilies = "data/{sample}/{run}/humann2/{sample}_genefamilies.biom",
         pathcoverage = "data/{sample}/{run}/humann2/{sample}_pathcoverage.biom",
         pathabundance = "data/{sample}/{run}/humann2/{sample}_pathabundance.biom"
+    params:
+        metaphlan_dir = config['PARAMS']['HUMANN2']["METAPHLAN_DIR"]
+        humann2_nt_db = config['PARAMS']['HUMANN2']["HUMANN2_NT_DB"]
+        humann2_aa_db = config['PARAMS']['HUMANN2']["HUMANN2_AA_DB"]
+        if "OTHER" in config['PARAMS']['HUMANN2']:
+            other = config['PARAMS']['HUMANN2']['OTHER']
     threads:
         8
     log:
@@ -546,13 +617,13 @@ rule humann2_sample_pe:
                   humann2 --input {temp_dir}/input.fastq \
                   --output {temp_dir}/{wildcards.sample} \
                   --output-basename {wildcards.sample} \
-                  --nucleotide-database {HUMANN2_NT_DB} \
-                  --protein-database {HUMANN2_AA_DB} \
+                  --nucleotide-database {parms.humann2_nt_db} \
+                  --protein-database {params.humann2_aa_db} \
                   --taxonomic-profile {input.metaphlan_in} \
-                  --metaphlan {METAPHLAN_DIR} \
+                  --metaphlan {params.metaphlan_dir} \
                   --o-log {log} \
                   --threads {threads} \
-                  --output-format biom 2> {log} 1>&2
+                  --output-format biom {params.other} 2> {log} 1>&2
 
 
                   scp {temp_dir}/{wildcards.sample}/{wildcards.sample}_genefamilies.biom {output.genefamilies}
@@ -561,6 +632,13 @@ rule humann2_sample_pe:
                   """)
 
 rule humann2_renorm_tables:
+    """
+    Renormalizes HUMAnN2 per-sample tables, per recommendation in the HUMAnN2
+    website. 
+
+    Counts-per-million (cpm) or Relative Abundance (Relabund) can be specified
+    as a list in the PARAMS: HUMANN2: NORMS variable in the config file.
+    """
     input:
         genefamilies = "data/{sample}/{run}/humann2/{sample}_genefamilies.biom",
         pathcoverage = "data/{sample}/{run}/humann2/{sample}_pathcoverage.biom",
@@ -594,6 +672,12 @@ rule humann2_renorm_tables:
 
 
 rule humann2_combine_tables:
+    """
+    Combines the per-sample normalized tables into a single run-wide table. 
+
+    Because HUMAnN2 takes a directory as input, first copies all the individual
+    tables generated in this run to a temp directory and runs on that.
+    """
     input:
         lambda wildcards: expand("data/{sample}/{run}/humann2/{sample}_genefamilies_{norm}.biom",
                sample=SAMPLES_PE, run=RUN, norm=wildcards.norm),
@@ -631,6 +715,18 @@ rule humann2_combine_tables:
                   """)
 
 rule humann2_remove_unmapped:
+    """
+    By default, HUMAnN2 includes the un-annoated reads (either unmapped in the
+    first step of the pipeline or not matched in the translated alignment step)
+    in the output files. In my experience, this causes relatively small
+    differences in run quality (e.g. different read lengths) to have huge
+    effects on the evaluated outcome, as the overall proportion of unmatched
+    reads varies by run, and the compositionality of the data then causes large
+    fluctuations in the count estimates of the annotated genes and pathways.
+
+    To remove this problem, this rule renormalizes the combined tables after
+    extracting unmatched read categories.
+    """
     input:
         genefamilies = "data/combined_analysis/{run}/humann2/combined_genefamilies_{norm}_all.biom",
         pathcoverage = "data/combined_analysis/{run}/humann2/combined_pathcoverage_{norm}_all.biom",
@@ -664,6 +760,15 @@ rule humann2_remove_unmapped:
 
 
 rule humann2_split_stratified_tables:
+    """
+    Splits the grouped tables into separate grouped taxonomy-stratified and un-
+    stratified tables for downstream analysis. Does this for both the combined
+    tables including unmatched reads (*_all) and those excluding unmatched
+    reads (*_mapped).
+
+    The un-stratified tables should then be directly useful for downstream
+    analysis in e.g. beta diversity. 
+    """
     input:
         genefamilies = "data/combined_analysis/{run}/humann2/combined_genefamilies_{norm}_{mapped}.biom",
         pathcoverage = "data/combined_analysis/{run}/humann2/combined_pathcoverage_{norm}_{mapped}.biom",
