@@ -10,12 +10,12 @@ ENVS:
   TRIM_ENV: source activate kneaddata
 SOFTWARE:
   gzip: gzip
-  trimmomatic: $CONDA_ENV_PATH/share/trimmomatic-*/trimmomatic
+  trimmomatic: trimmomatic
 PARAMS:
   HUMANN2:
     HUMANN2_AA_DB: /home/jgsanders/ref_data/humann2/uniref
     HUMANN2_NT_DB: /home/jgsanders/ref_data/humann2/chocophlan
-    METAPHLAN_DIR: /home/jgsanders/miniconda/envs/kneaddata/share/metaphlan2
+    METAPHLAN_DIR: /home/jgsanders/share/metaphlan2
     NORMS:
     - cpm
     - relab
