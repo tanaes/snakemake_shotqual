@@ -5,7 +5,7 @@ conda create -n kneaddata --yes python=3 pip pyyaml xlrd pandas jupyter notebook
 
 # install kneaddata and dependencies
 source activate kneaddata
-conda install -c bioconda --yes bowtie2 fastqc trimmomatic diamond samtools bedtools
+conda install -c bioconda --yes bowtie2 fastqc trimmomatic diamond samtools bedtools glpk
 pip install snakemake multiqc kneaddata biom-format
 
 # download the kneaddata human genome database
