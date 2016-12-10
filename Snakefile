@@ -933,8 +933,8 @@ rule mash_sketch:
     output:
         'data/{sample}/{run}/mash/{sample}.fna.msh'
     params:
-        mash = config['SOFTWARE']['mash']
-        seqtk = config['SOFTWARE']['seqtk']
+        mash = config['SOFTWARE']['mash'],
+        seqtk = config['SOFTWARE']['seqtk'],
         mash_params = config['PARAMS']['MASH']
     threads:
         1
@@ -968,6 +968,8 @@ rule mash_dm:
             run = RUN)
     output:
         "combined_analysis/{run}/mash/mash.dist.txt"
+    params:
+        mash = config['SOFTWARE']['mash']
     threads:
         1
     log:
@@ -978,7 +980,7 @@ rule mash_dm:
         for i in range(len(input)):
             for j in range(i,len(input)):
                 shell("""
-                      mash dist {input[i]} {input[j]} >> {output}
+                      {params.mash} dist {input[i]} {input[j]} >> {output}
                       """)
 
 rule mash_dm_write:
@@ -1008,6 +1010,7 @@ rule mash_dm_write:
         dm = np.zeros([len(samples),len(samples)])
         pm = np.zeros([len(samples),len(samples)])
 
+        # fill matrices with values
         for s1, s2, d, p in zip(mash_vec[0],mash_vec[1],mash_vec[2],mash_vec[3]):
             i1 = samples.index(s1)
             i2 = samples.index(s2)
