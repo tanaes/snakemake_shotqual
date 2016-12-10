@@ -979,6 +979,7 @@ rule mash_refseq:
     output:
         'data/{sample}/{run}/mash/{sample}.refseq.txt'
     params:
+        config['SOFTWARE']['mash']
         db = config['PARAMS']['MASH']['REFSEQ_DB']
     threads:
         1
@@ -1003,7 +1004,7 @@ rule mash_dm:
     output:
         "data/combined_analysis/{run}/mash/mash.dist.txt"
     params:
-        mash = config['SOFTWARE']['MASH']['OTHER']
+        mash = config['SOFTWARE']['mash']
     threads:
         1
     log:
