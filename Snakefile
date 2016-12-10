@@ -972,7 +972,7 @@ rule mash_dm:
             sample = SAMPLES_PE,
             run = RUN)
     output:
-        "combined_analysis/{run}/mash/mash.dist.txt"
+        "data/combined_analysis/{run}/mash/mash.dist.txt"
     params:
         mash = config['SOFTWARE']['mash']
     threads:
@@ -995,10 +995,10 @@ rule mash_dm_write:
     Writes square distance matrices from p values and distances that Mash makes
     """
     input:
-        "combined_analysis/{run}/mash/mash.dist.txt"
+        "data/combined_analysis/{run}/mash/mash.dist.txt"
     output:
-        dist_matrix = "combined_analysis/{run}/mash/mash.dist.dm",
-        p_matrix = "combined_analysis/{run}/mash/mash.dist.p"
+        dist_matrix = "data/combined_analysis/{run}/mash/mash.dist.dm",
+        p_matrix = "data/combined_analysis/{run}/mash/mash.dist.p"
     threads:
         1
     log:
