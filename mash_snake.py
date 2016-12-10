@@ -16,7 +16,9 @@ rule mash_sketch:
     output:
         'data/{sample}/{run}/mash/{sample}.fna.msh'
     params:
-        mash = config['PARAMS']['MASH']
+        mash = config['SOFTWARE']['mash']
+        seqtk = config['SOFTWARE']['seqtk']
+        mash_params = config['PARAMS']['MASH']
     threads:
         1
     log:
@@ -26,14 +28,14 @@ rule mash_sketch:
     run:
         with tempfile.TemporaryDirectory(dir=TMP_DIR_ROOT) as temp_dir:
             shell("""
-                  seqtk seq -a {input.forward} > {temp_dir}/R1.fna
-                  seqtk seq -a {input.reverse} > {temp_dir}/R2.fna
-                  seqtk seq -a {input.unpaired_1} > {temp_dir}/U1.fna
-                  seqtk seq -a {input.unpaired_2} > {temp_dir}/U2.fna
+                  {params.seqtk} seq -a {input.forward} > {temp_dir}/R1.fna
+                  {params.seqtk} seq -a {input.reverse} > {temp_dir}/R2.fna
+                  {params.seqtk} seq -a {input.unpaired_1} > {temp_dir}/U1.fna
+                  {params.seqtk} seq -a {input.unpaired_2} > {temp_dir}/U2.fna
 
                   cat {temp_dir}/R1.fna {temp_dir}/R2.fna {temp_dir}/U1.fna {temp_dir}/U2.fna > {temp_dir}/cat.fna
 
-                  mash sketch {params.mash} {temp_dir}/cat.fna
+                  {params.mash} sketch {params.mash_params} {temp_dir}/cat.fna
 
                   mv {temp_dir}/cat.fna.msh {output}
                   """)
