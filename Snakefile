@@ -985,8 +985,10 @@ rule mash_dm:
     run:
         for i in range(len(input)):
             for j in range(i,len(input)):
+                sample1 = input[i]
+                sample2 = input[j]
                 shell("""
-                      {params.mash} dist {input[i]} {input[j]} >> {output}
+                      {params.mash} dist {sample1} {sample2} >> {output}
                       """)
 
 rule mash_dm_write:
