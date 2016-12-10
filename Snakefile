@@ -942,6 +942,7 @@ rule mash_sketch:
         mash = config['SOFTWARE']['mash'],
         seqtk = config['SOFTWARE']['seqtk'],
         mash_params = config['PARAMS']['MASH']
+        output_base = 'data/{sample}/{run}/mash/{sample}.fna'
     threads:
         1
     log:
@@ -958,9 +959,7 @@ rule mash_sketch:
 
                   cat {temp_dir}/R1.fna {temp_dir}/R2.fna {temp_dir}/U1.fna {temp_dir}/U2.fna > {temp_dir}/cat.fna
 
-                  {params.mash} sketch {params.mash_params} {temp_dir}/cat.fna
-
-                  mv {temp_dir}/cat.fna.msh {output}
+                  {params.mash} sketch {params.mash_params} -o {params.output_base}
                   """)
 
 rule mash_dm:
