@@ -941,7 +941,7 @@ rule mash_sketch:
     params:
         mash = config['SOFTWARE']['mash'],
         seqtk = config['SOFTWARE']['seqtk'],
-        mash_params = config['PARAMS']['MASH']
+        mash_params = config['PARAMS']['MASH'],
         output_base = 'data/{sample}/{run}/mash/{sample}.fna'
     threads:
         1
