@@ -957,9 +957,9 @@ rule mash_sketch:
                   {params.seqtk} seq -a {input.unpaired_1} > {temp_dir}/U1.fna
                   {params.seqtk} seq -a {input.unpaired_2} > {temp_dir}/U2.fna
 
-                  cat {temp_dir}/R1.fna {temp_dir}/R2.fna {temp_dir}/U1.fna {temp_dir}/U2.fna > {temp_dir}/cat.fna
+                  cat {temp_dir}/R1.fna {temp_dir}/R2.fna {temp_dir}/U1.fna {temp_dir}/U2.fna > {temp_dir}/{wildcards.sample}
 
-                  {params.mash} sketch {params.mash_params} -o {params.output_base} {temp_dir}/cat.fna
+                  {params.mash} sketch {params.mash_params} -o {params.output_base} {temp_dir}/{wildcards.sample}
                   """)
 
 rule mash_dm:
@@ -1028,8 +1028,9 @@ rule mash_dm_write:
             pm[i1,i2] = p
             pm[i2,i1] = p
 
-        sk_dm = DissimilarityMatrix(dm, ids=samples)
-        sk_pm = DissimilarityMatrix(pm, ids=samples)
+        ids = [os.path.basename(x) for x in samples]
+        sk_dm = DissimilarityMatrix(dm, ids=ids)
+        sk_pm = DissimilarityMatrix(pm, ids=ids)
 
         sk_dm.write(output['dist_matrix'])
         sk_pm.write(output['p_matrix'])
