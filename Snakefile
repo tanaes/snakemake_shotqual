@@ -979,7 +979,7 @@ rule mash_refseq:
     output:
         'data/{sample}/{run}/mash/{sample}.refseq.txt'
     params:
-        config['SOFTWARE']['mash'],
+        mash = config['SOFTWARE']['mash'],
         db = config['PARAMS']['MASH']['REFSEQ_DB']
     threads:
         1
