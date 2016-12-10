@@ -918,8 +918,8 @@ rule mash:
     input:
         expand('data/{sample}/{run}/mash/{sample}.fna.msh',
                sample=SAMPLES_PE, run=RUN),
-        expand("combined_analysis/{run}/mash/mash.dist.dm", run=RUN),
-        expand("combined_analysis/{run}/mash/mash.dist.p", run=RUN)
+        expand("data/combined_analysis/{run}/mash/mash.dist.dm", run=RUN),
+        expand("data/combined_analysis/{run}/mash/mash.dist.p", run=RUN)
 
 rule mash_sketch:
     """
