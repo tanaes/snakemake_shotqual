@@ -1003,7 +1003,7 @@ rule mash_dm:
     output:
         "data/combined_analysis/{run}/mash/mash.dist.txt"
     params:
-        mash = config['SOFTWARE']['mash']
+        mash = config['SOFTWARE']['MASH']['OTHER']
     threads:
         1
     log:
