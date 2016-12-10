@@ -914,6 +914,12 @@ rule humann2_split_stratified_tables:
 
 
 #### Mash rules
+rule mash:
+    input:
+        expand('data/{sample}/{run}/mash/{sample}.fna.msh',
+               sample=SAMPLES_PE, run=RUN),
+        expand("combined_analysis/{run}/mash/mash.dist.dm", run=RUN),
+        expand("combined_analysis/{run}/mash/mash.dist.p", run=RUN)
 
 rule mash_sketch:
     """
