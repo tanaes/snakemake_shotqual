@@ -959,7 +959,7 @@ rule mash_sketch:
 
                   cat {temp_dir}/R1.fna {temp_dir}/R2.fna {temp_dir}/U1.fna {temp_dir}/U2.fna > {temp_dir}/cat.fna
 
-                  {params.mash} sketch {params.mash_params} -o {params.output_base}
+                  {params.mash} sketch {params.mash_params} -o {params.output_base} {temp_dir}/cat.fna
                   """)
 
 rule mash_dm:
