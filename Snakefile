@@ -1009,6 +1009,7 @@ rule mash_dm_write:
     run:
         from skbio.stats.distance import DissimilarityMatrix
         import pandas as pd
+        import numpy as np
 
         mash_vec = pd.read_csv(input[0], sep = '\t', header=None)
 
