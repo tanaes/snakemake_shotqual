@@ -918,8 +918,12 @@ rule mash:
     input:
         expand('data/{sample}/{run}/mash/{sample}.fna.msh',
                sample=SAMPLES_PE, run=RUN),
+        expand('data/{sample}/{run}/mash/{sample}.refseq.txt',
+               sample=SAMPLES_PE, run=RUN),
         expand("data/combined_analysis/{run}/mash/mash.dist.dm", run=RUN),
         expand("data/combined_analysis/{run}/mash/mash.dist.p", run=RUN)
+
+
 
 rule mash_sketch:
     """
@@ -941,7 +945,7 @@ rule mash_sketch:
     params:
         mash = config['SOFTWARE']['mash'],
         seqtk = config['SOFTWARE']['seqtk'],
-        mash_params = config['PARAMS']['MASH'],
+        mash_params = config['PARAMS']['MASH']['OTHER'],
         output_base = 'data/{sample}/{run}/mash/{sample}.fna'
     threads:
         1
@@ -961,6 +965,31 @@ rule mash_sketch:
 
                   {params.mash} sketch {params.mash_params} -o {params.output_base} {temp_dir}/{wildcards.sample}
                   """)
+
+
+rule mash_refseq:
+    """
+    Compares a mash sketch against refseq sketch. 
+
+    Requires that the sketches have same -k values -- for RefSeqDefault, 
+    -k should equal 21. 
+    """
+    input:
+        'data/{sample}/{run}/mash/{sample}.fna.msh'
+    output:
+        'data/{sample}/{run}/mash/{sample}.refseq.txt'
+    params:
+        db = ['PARAMS']['MASH']['REFSEQ_DB']
+    threads:
+        1
+    log:
+        "logs/{run}/analysis/mash_refseq_{sample}.log"
+    benchmark:
+        "benchmarks/{run}/analysis/mash_refseq_{sample}.json"
+    run:
+        shell("""
+              {params.mash} dist {params.db} {input} | sort -gk3 > {output}
+              """)
 
 rule mash_dm:
     """
@@ -989,6 +1018,52 @@ rule mash_dm:
                 shell("""
                       {params.mash} dist {sample1} {sample2} >> {output}
                       """)
+
+rule mash_dm_write:
+    """
+    Writes square distance matrices from p values and distances that Mash makes
+    """
+    input:
+        "data/combined_analysis/{run}/mash/mash.dist.txt"
+    output:
+        dist_matrix = "data/combined_analysis/{run}/mash/mash.dist.dm",
+        p_matrix = "data/combined_analysis/{run}/mash/mash.dist.p"
+    threads:
+        1
+    log:
+        "logs/{run}/analysis/mash_dm_write.log"
+    benchmark:
+        "benchmarks/{run}/analysis/mash_dm_write.json"
+    run:
+        from skbio.stats.distance import DissimilarityMatrix
+        import pandas as pd
+        import numpy as np
+
+        mash_vec = pd.read_csv(input[0], sep = '\t', header=None)
+
+        # get sorted list of samples
+        samples = sorted(set(mash_vec[0]) | set(mash_vec[1]))
+
+        dm = np.zeros([len(samples),len(samples)])
+        pm = np.zeros([len(samples),len(samples)])
+
+        # fill matrices with values
+        for s1, s2, d, p in zip(mash_vec[0],mash_vec[1],mash_vec[2],mash_vec[3]):
+            i1 = samples.index(s1)
+            i2 = samples.index(s2)
+            print('s1: %s, s2: %s, i1: %s, i2: %s, d: %s, p: %s' % (s1, s2, i1, i2, d, p))
+            dm[i1,i2] = d
+            dm[i2,i1] = d
+            pm[i1,i2] = p
+            pm[i2,i1] = p
+
+        ids = [os.path.basename(x) for x in samples]
+        sk_dm = DissimilarityMatrix(dm, ids=ids)
+        sk_pm = DissimilarityMatrix(pm, ids=ids)
+
+        sk_dm.write(output['dist_matrix'])
+        sk_pm.write(output['p_matrix'])
+
 
 rule mash_dm_write:
     """
