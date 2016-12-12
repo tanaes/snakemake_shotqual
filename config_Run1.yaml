@@ -10,6 +10,8 @@ ENVS:
   TRIM_ENV: source activate kneaddata
 SOFTWARE:
   gzip: gzip
+  mash: /home/jgsanders/git_sw/git_bin/mash-Linux64-v1.1.1/mash
+  seqtk: /home/jgsanders/git_sw/seqtk/seqtk
   trimmomatic: trimmomatic
 PARAMS:
   HUMANN2:
@@ -20,6 +22,9 @@ PARAMS:
     - cpm
     - relab
     OTHER: ''
+  MASH:
+    OTHER: -r -m 2 -k 21 -s 1000
+    REFSEQ_DB: /home/jgsanders/ref_data/mash/RefSeqSketchesDefaults.msh
   TRIMMOMATIC:
     ILLUMINACLIP: '2:30:10'
     QUAL: LEADING:20 TRAILING:20 AVGQUAL:30 MINLEN:32 TOPHRED33
