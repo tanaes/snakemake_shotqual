@@ -5,7 +5,8 @@ conda create -n kneaddata --yes python=3 pip pyyaml xlrd pandas jupyter notebook
 
 # install kneaddata and dependencies
 source activate kneaddata
-conda install -c bioconda --yes bowtie2 fastqc trimmomatic diamond samtools bedtools glpk
+conda install -c bioconda --yes bowtie2 fastqc trimmomatic diamond samtools bedtools glpk seqtk
+conda install -c biocore scikit-bio
 pip install snakemake multiqc kneaddata biom-format
 
 # download the kneaddata human genome database
@@ -25,3 +26,10 @@ pip install humann2
 mkdir ~/share/humann2_db
 humann2_databases --download chocophlan full ~/share/humann2_db
 humann2_databases --download uniref uniref90_ec_filtered_diamond ~/share/humann2_db
+
+# download Mash and seqtk
+cd ~/share
+wget https://github.com/marbl/Mash/releases/download/v1.1.1/mash-Linux64-v1.1.1.tar.gz
+tar -xzvf mash-Linux64-v1.1.1.tar.gz
+
+
