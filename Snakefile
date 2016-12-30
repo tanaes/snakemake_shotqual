@@ -1000,20 +1000,18 @@ rule mash_dm:
     Makes mash distance output file
     """
     input:
-        expand( # trimmomatic output for PE data
-            "data/{sample}/{run}/mash/{sample}.fna.msh",
-            sample = SAMPLES_PE,
-            run = RUN)
+        expand("data/{sample}/{run}/mash/{sample}.fna.msh",
+               sample = SAMPLES_PE, run = RUN)
     output:
-        "data/combined_analysis/{run}/mash/mash.dist.txt"
+        "data/combined_analysis/{RUN}/mash/mash.dist.txt"
     params:
         mash = config['SOFTWARE']['mash']
     threads:
         1
     log:
-        "logs/{run}/analysis/mash_dm.log"
+        "logs/{RUN}/analysis/mash_dm.log"
     benchmark:
-        "benchmarks/{run}/analysis/mash_dm.json"
+        "benchmarks/{RUN}/analysis/mash_dm.json"
     run:
         for i in range(len(input)):
             for j in range(i,len(input)):
