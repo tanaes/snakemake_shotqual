@@ -1000,8 +1000,8 @@ rule mash_dm:
     Makes mash distance output file
     """
     input:
-        expand("data/{sample}/{run}/mash/{sample}.fna.msh",
-               sample = SAMPLES_PE, run = RUN)
+        expand("data/{sample}/{RUN}/mash/{sample}.fna.msh",
+               sample = SAMPLES_PE)
     output:
         "data/combined_analysis/{RUN}/mash/mash.dist.txt"
     params:
