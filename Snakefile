@@ -999,7 +999,7 @@ rule mash_dm:
         expand( # trimmomatic output for PE data
             "data/{sample}/{run}/mash/{sample}.fna.msh",
             sample = config['samples_pe'],
-            run = RUN)
+            run = config['RUN'])
     output:
         "data/combined_analysis/{RUN}/mash/mash.dist.txt"
     params:
