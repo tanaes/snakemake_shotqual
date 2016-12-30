@@ -921,8 +921,8 @@ rule mash:
                sample=SAMPLES_PE, run=RUN),
         expand('data/{sample}/{run}/mash/{sample}.refseq.txt',
                sample=SAMPLES_PE, run=RUN),
-        "data/combined_analysis/{RUN}/mash/mash.dist.dm",
-        "data/combined_analysis/{RUN}/mash/mash.dist.p"
+        "data/combined_analysis/{config.RUN}/mash/mash.dist.dm",
+        "data/combined_analysis/{config.RUN}/mash/mash.dist.p"
 
 
 
