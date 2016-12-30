@@ -9,6 +9,8 @@ RUN = config["RUN"]
 SAMPLES_PE = config["samples_pe"] if "samples_pe" in config else []
 SAMPLES_SE = config["samples_se"] if "samples_se" in config else []
 
+print(RUN)
+
 # Path to programs
 trimmomatic = config["SOFTWARE"]["trimmomatic"]
 gzip        = config["SOFTWARE"]["gzip"]
@@ -998,18 +1000,18 @@ rule mash_dm:
     input:
         expand( # trimmomatic output for PE data
             "data/{sample}/{run}/mash/{sample}.fna.msh",
-            sample = config['samples_pe'],
-            run = config['RUN'])
+            sample = SAMPLES_PE,
+            run = RUN)
     output:
-        "data/combined_analysis/{RUN}/mash/mash.dist.txt"
+        "data/combined_analysis/{run}/mash/mash.dist.txt"
     params:
         mash = config['SOFTWARE']['mash']
     threads:
         1
     log:
-        "logs/{RUN}/analysis/mash_dm.log"
+        "logs/{run}/analysis/mash_dm.log"
     benchmark:
-        "benchmarks/{RUN}/analysis/mash_dm.json"
+        "benchmarks/{run}/analysis/mash_dm.json"
     run:
         for i in range(len(input)):
             for j in range(i,len(input)):
