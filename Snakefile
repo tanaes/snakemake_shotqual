@@ -15,8 +15,7 @@ gzip        = config["SOFTWARE"]["gzip"]
 
 # These rules are not processor intensive, and will execute on the head node
 # without being allocated to compute nodes
-localrules: raw_make_links_pe, raw_make_links_se, multiQC_run, multiQC_all,
-            humann2_renorm_tables, humann2_remove_unmapped
+localrules: raw_make_links_pe, raw_make_links_se, multiQC_run, multiQC_all
 
 # This specifices the environment setup command for running compute jobs
 # (for example, source activate kneaddata) and is specified in config.yaml
@@ -1014,10 +1013,10 @@ rule mash_dm:
     run:
         for i in range(len(input)):
             for j in range(i,len(input)):
-                sample1 = input[i]
-                sample2 = input[j]
+                thing1 = input[i]
+                thing2 = input[j]
                 shell("""
-                      {params.mash} dist {sample1} {sample2} >> {output}
+                      {params.mash} dist {thing1} {thing2} >> {output}
                       """)
 
 rule mash_dm_write:
