@@ -996,10 +996,10 @@ rule mash_dm:
     Makes mash distance output file
     """
     input:
-        lambda wildcards: expand( # trimmomatic output for PE data
+        expand( # trimmomatic output for PE data
             "data/{sample}/{run}/mash/{sample}.fna.msh",
             sample = SAMPLES_PE,
-            run = wildcards.run)
+            run = RUN)
     output:
         "data/combined_analysis/{run}/mash/mash.dist.txt"
     params:
