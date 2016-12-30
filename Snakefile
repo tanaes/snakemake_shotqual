@@ -9,8 +9,6 @@ RUN = config["RUN"]
 SAMPLES_PE = config["samples_pe"] if "samples_pe" in config else []
 SAMPLES_SE = config["samples_se"] if "samples_se" in config else []
 
-print(RUN)
-
 # Path to programs
 trimmomatic = config["SOFTWARE"]["trimmomatic"]
 gzip        = config["SOFTWARE"]["gzip"]
@@ -921,8 +919,10 @@ rule mash:
                sample=SAMPLES_PE, run=RUN),
         expand('data/{sample}/{run}/mash/{sample}.refseq.txt',
                sample=SAMPLES_PE, run=RUN),
-        "data/combined_analysis/{config.RUN}/mash/mash.dist.dm",
-        "data/combined_analysis/{config.RUN}/mash/mash.dist.p"
+        expand("data/combined_analysis/{run}/mash/mash.dist.dm",
+               run=RUN)#,
+        # expand("data/combined_analysis/{run}/mash/mash.dist.p",
+        #        sample=SAMPLES_PE, run=RUN)
 
 
 
