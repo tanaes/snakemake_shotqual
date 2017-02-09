@@ -1097,12 +1097,13 @@ rule megahit:
         "benchmarks/{run}/assembly/megahit_{sample}.json"
     run:
         with tempfile.TemporaryDirectory(dir=TMP_DIR_ROOT) as temp_dir:
+            mem_b = params.memory * 1000000000
             outdir = os.path.dirname(output[0])
             shell("""
                   rm -r {outdir}
-                  
+
                   {params.megahit} -1 {input.forward} -2 {input.reverse} -r {input.unpaired_1} -r {input.unpaired_2} \
-                  -m {params.memory} -t {threads} -o {outdir} --out-prefix {wildcards.sample} --tmp-dir {temp_dir} 2> {log} 1>&2
+                  -m {mem_b} -t {threads} -o {outdir} --out-prefix {wildcards.sample} --tmp-dir {temp_dir} 2> {log} 1>&2
                   """)
 
 
