@@ -1072,7 +1072,10 @@ rule assemble:
         expand('data/{sample}/{run}/megahit/{sample}.contigs.fa',
                sample=SAMPLES_PE, run=RUN),
         expand('data/{sample}/{run}/metaquast/done.txt',
+               sample=SAMPLES_PE, run=RUN),
+        expand("data/{sample}/{run}/quast/done.txt"
                sample=SAMPLES_PE, run=RUN)
+
 
 
 rule megahit:
@@ -1127,6 +1130,30 @@ rule metaquast:
 
               touch {output}
               """)
+
+
+rule quast:
+    input:
+        'data/{sample}/{run}/megahit/{sample}.contigs.fa'
+    output:
+        "data/{sample}/{run}/quast/done.txt"
+    log:
+        "logs/{run}/assembly/quast_{sample}.log"
+    params:
+        quast = config['SOFTWARE']['quast']
+    threads:
+        8
+    run:
+        outdir = os.path.dirname(output[0])
+        shell("""
+              set +u; {QUAST_ENV}; set -u
+
+              {params.quast} -t {threads} -o {outdir} {input} 2> {log} 1>&2
+
+              touch {output}
+              """)
+
+
 
 
 
