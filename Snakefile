@@ -29,6 +29,8 @@ if "HUMANN2_ENV" in config["ENVS"]:
     HUMANN2_ENV = config["ENVS"]["HUMANN2_ENV"]
 if "METAPHLAN_ENV" in config["ENVS"]:
     METAPHLAN_ENV = config["ENVS"]["METAPHLAN_ENV"]
+if "QUAST_ENV" in config["ENVS"]:
+    QUAST_ENV = config["ENVS"]["QUAST_ENV"]
 
 # Host DB specified in config file accessed in params section of rule
 
@@ -1063,6 +1065,66 @@ rule mash_dm_write:
 
         sk_dm.write(output['dist_matrix'])
         sk_pm.write(output['p_matrix'])
+
+
+rule assemble:
+    input:
+        expand('data/{sample}/{run}/megahit/{sample}.contigs.fa',
+               sample=SAMPLES_PE, run=RUN),
+        expand('data/{sample}/{run}/metaquast/done.txt',
+               sample=SAMPLES_PE, run=RUN)
+
+
+rule megahit:
+    """
+    Run Megahit assembly on fastq
+    """
+    input:
+        forward  = "data/{sample}/{run}/host_filtered/{sample}_R1.trimmed.host_filtered.fq.gz",
+        reverse  = "data/{sample}/{run}/host_filtered/{sample}_R2.trimmed.host_filtered.fq.gz",
+        unpaired_1 = "data/{sample}/{run}/host_filtered/{sample}_U1.trimmed.host_filtered.fq.gz",
+        unpaired_2 = "data/{sample}/{run}/host_filtered/{sample}_U2.trimmed.host_filtered.fq.gz"
+    output:
+        'data/{sample}/{run}/megahit/{sample}.contigs.fa'
+    params:
+        megahit = config['SOFTWARE']['megahit'],
+        memory = 128
+    threads:
+        8
+    log:
+        "logs/{run}/assembly/megahit_{sample}.log"
+    benchmark:
+        "benchmarks/{run}/assembly/megahit_{sample}.json"
+    run:
+        with tempfile.TemporaryDirectory(dir=TMP_DIR_ROOT) as temp_dir:
+            outdir = os.path.dirname(output)
+            shell("""
+                  {params.megahit} [options] -1 {input.forward} -2 {input.reverse} -r {input.unpaired_1} -r {input.unpaired_2} \
+                  -m {params.memory} -t {threads} -o {outdir} --out-prefix {wildcards.sample} --tmp-dir {temp_dir} 2> {log} 1>&2
+                  """)
+
+
+rule metaquast:
+    input:
+        'data/{sample}/{run}/megahit/{sample}.contigs.fa'
+    output:
+        "data/{sample}/{run}/metaquast/done.txt"
+    log:
+        "logs/{run}/assembly/metaquast_{sample}.log"
+    params:
+        metaquast = config['SOFTWARE']['metaquast']
+    threads:
+        8
+    run:
+        outdir = os.path.dirname(output)
+        shell("""
+              set +u; {QUAST_ENV}; set -u
+
+              {params.metaquast} -t {params.threads} -o {outdir} {input} 2> {log} 1>&2
+
+              touch {output}
+              """)
+
 
 
 

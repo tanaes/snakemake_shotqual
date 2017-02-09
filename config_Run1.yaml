@@ -8,11 +8,14 @@ ENVS:
   METAPHLAN_ENV: source activate kneaddata
   QC_ENV: source activate kneaddata
   TRIM_ENV: source activate kneaddata
+  QUAST_ENV: source activate exp-design
 SOFTWARE:
   gzip: gzip
   mash: /home/jgsanders/git_sw/git_bin/mash-Linux64-v1.1.1/mash
   seqtk: /home/jgsanders/git_sw/seqtk/seqtk
   trimmomatic: trimmomatic
+  metaquast: metaquast.py
+  megahit: megahit
 PARAMS:
   HUMANN2:
     HUMANN2_AA_DB: /home/jgsanders/ref_data/humann2/uniref
