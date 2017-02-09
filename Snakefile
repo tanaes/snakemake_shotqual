@@ -1097,7 +1097,7 @@ rule megahit:
         "benchmarks/{run}/assembly/megahit_{sample}.json"
     run:
         with tempfile.TemporaryDirectory(dir=TMP_DIR_ROOT) as temp_dir:
-            outdir = os.path.dirname(output)
+            outdir = os.path.dirname(output[0])
             shell("""
                   {params.megahit} [options] -1 {input.forward} -2 {input.reverse} -r {input.unpaired_1} -r {input.unpaired_2} \
                   -m {params.memory} -t {threads} -o {outdir} --out-prefix {wildcards.sample} --tmp-dir {temp_dir} 2> {log} 1>&2
@@ -1116,7 +1116,7 @@ rule metaquast:
     threads:
         8
     run:
-        outdir = os.path.dirname(output)
+        outdir = os.path.dirname(output[0])
         shell("""
               set +u; {QUAST_ENV}; set -u
 
