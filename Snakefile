@@ -1073,7 +1073,7 @@ rule assemble:
                sample=SAMPLES_PE, run=RUN),
         expand('data/{sample}/{run}/metaquast/done.txt',
                sample=SAMPLES_PE, run=RUN),
-        expand("data/{sample}/{run}/quast/done.txt"
+        expand("data/{sample}/{run}/quast/done.txt",
                sample=SAMPLES_PE, run=RUN)
 
 
