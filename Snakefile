@@ -1099,7 +1099,7 @@ rule megahit:
         with tempfile.TemporaryDirectory(dir=TMP_DIR_ROOT) as temp_dir:
             outdir = os.path.dirname(output[0])
             shell("""
-                  {params.megahit} [options] -1 {input.forward} -2 {input.reverse} -r {input.unpaired_1} -r {input.unpaired_2} \
+                  {params.megahit} -1 {input.forward} -2 {input.reverse} -r {input.unpaired_1} -r {input.unpaired_2} \
                   -m {params.memory} -t {threads} -o {outdir} --out-prefix {wildcards.sample} --tmp-dir {temp_dir} 2> {log} 1>&2
                   """)
 
