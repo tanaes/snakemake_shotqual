@@ -1123,7 +1123,7 @@ rule metaquast:
         shell("""
               set +u; {QUAST_ENV}; set -u
 
-              {params.metaquast} -t {params.threads} -o {outdir} {input} 2> {log} 1>&2
+              {params.metaquast} -t {threads} -o {outdir} {input} 2> {log} 1>&2
 
               touch {output}
               """)
