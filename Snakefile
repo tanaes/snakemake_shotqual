@@ -1077,7 +1077,6 @@ rule assemble:
                sample=SAMPLES_PE, run=RUN)
 
 
-
 rule megahit:
     """
     Run Megahit assembly on fastq
@@ -1154,6 +1153,91 @@ rule quast:
               """)
 
 
+rule subsample:
+    input:
+        forward  = "data/{sample}/{run}/host_filtered/{sample}_R1.trimmed.host_filtered.fq.gz",
+        reverse  = "data/{sample}/{run}/host_filtered/{sample}_R2.trimmed.host_filtered.fq.gz"
+    output:
+        forward  = "data/{sample}/{run}/host_filtered/{sample}_R1.trimmed.host_filtered.10M.fq.gz",
+        reverse  = "data/{sample}/{run}/host_filtered/{sample}_R2.trimmed.host_filtered.10M.fq.gz"
+    run:
+        shell("""
+              seqtk sample {input.forward} 10000000 | gzip -c > {output.forward}
+              seqtk sample {input.reverse} 10000000 | gzip -c > {output.reverse} 
+              """)
+
+rule sub_megahit:
+    """
+    Run Megahit assembly on fastq
+    """
+    input:
+        forward  = "data/{sample}/{run}/host_filtered/{sample}_R1.trimmed.host_filtered.10M.fq.gz",
+        reverse  = "data/{sample}/{run}/host_filtered/{sample}_R2.trimmed.host_filtered.10M.fq.gz"
+    output:
+        'data/{sample}/{run}/megahit_10M/{sample}.contigs.fa'
+    params:
+        megahit = config['SOFTWARE']['megahit'],
+        memory = 128
+    threads:
+        8
+    log:
+        "logs/{run}/assembly/megahit_10M_{sample}.log"
+    benchmark:
+        "benchmarks/{run}/assembly/megahit_10M_{sample}.json"
+    run:
+        with tempfile.TemporaryDirectory(dir=TMP_DIR_ROOT) as temp_dir:
+            mem_b = params.memory * 1000000000
+            outdir = os.path.dirname(output[0])
+            shell("""
+                  rm -r {outdir}
+
+                  {params.megahit} -1 {input.forward} -2 {input.reverse} \
+                  -m {mem_b} -t {threads} -o {outdir} --out-prefix {wildcards.sample} --tmp-dir {temp_dir} 2> {log} 1>&2
+                  """)
+
+
+rule sub_metaquast:
+    input:
+        'data/{sample}/{run}/megahit_10M/{sample}.contigs.fa'
+    output:
+        "data/{sample}/{run}/metaquast_10M/done.txt"
+    log:
+        "logs/{run}/assembly/metaquast_10M_{sample}.log"
+    params:
+        metaquast = config['SOFTWARE']['metaquast']
+    threads:
+        8
+    run:
+        outdir = os.path.dirname(output[0])
+        shell("""
+              set +u; {QUAST_ENV}; set -u
+
+              {params.metaquast} -t {threads} -o {outdir} {input} 2> {log} 1>&2
+
+              touch {output}
+              """)
+
+
+rule sub_quast:
+    input:
+        'data/{sample}/{run}/megahit_10M/{sample}.contigs.fa'
+    output:
+        "data/{sample}/{run}/quast_10M/done.txt"
+    log:
+        "logs/{run}/assembly/quast_10M_{sample}.log"
+    params:
+        quast = config['SOFTWARE']['quast']
+    threads:
+        8
+    run:
+        outdir = os.path.dirname(output[0])
+        shell("""
+              set +u; {QUAST_ENV}; set -u
+
+              {params.quast} -t {threads} -o {outdir} {input} 2> {log} 1>&2
+
+              touch {output}
+              """)
 
 
 
