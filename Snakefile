@@ -1185,7 +1185,7 @@ rule sub_megahit:
         'data/{sample}/{run}/megahit_10M/{sample}.contigs.fa'
     params:
         megahit = config['SOFTWARE']['megahit'],
-        memory = 128
+        memory = 16
     threads:
         8
     log:
