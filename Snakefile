@@ -1152,6 +1152,14 @@ rule quast:
               touch {output}
               """)
 
+rule sub_assemble:
+    input:
+        expand('data/{sample}/{run}/megahit_10M/{sample}.contigs.fa',
+               sample=SAMPLES_PE, run=RUN),
+        expand('data/{sample}/{run}/metaquast_10M/done.txt',
+               sample=SAMPLES_PE, run=RUN),
+        expand("data/{sample}/{run}/quast_10M/done.txt",
+               sample=SAMPLES_PE, run=RUN)
 
 rule subsample:
     input:
